@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AYIGroupMarket.Admin/AYIGroupMarket.Admin.csproj" />
+    <Project Path="src/AYIGroupMarket.Api/AYIGroupMarket.Api.csproj" />
+    <Project Path="src/AYIGroupMarket.Application/AYIGroupMarket.Application.csproj" />
+    <Project Path="src/AYIGroupMarket.Domain/AYIGroupMarket.Domain.csproj" />
+    <Project Path="src/AYIGroupMarket.Infrastructure/AYIGroupMarket.Infrastructure.csproj" />
+    <Project Path="src/AYIGroupMarket.Web/AYIGroupMarket.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AYIGroupMarket.IntegrationTests/AYIGroupMarket.IntegrationTests.csproj" />
+    <Project Path="tests/AYIGroupMarket.UnitTests/AYIGroupMarket.UnitTests.csproj" />
+  </Folder>
+</Solution>

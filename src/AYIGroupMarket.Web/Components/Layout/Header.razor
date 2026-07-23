@@ -1,0 +1,41 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+
+<header class="site-header sticky-top bg-white border-bottom">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center gap-4 py-2">
+
+            <a href="/" class="d-flex align-items-center gap-2 text-decoration-none flex-shrink-0">
+                <span class="logo-mark">A</span>
+                <span class="fw-bold text-dark lh-1">
+                    AYI GROUP
+                    <small class="d-block text-uppercase" style="font-size:.55rem; letter-spacing:.1em; color:var(--ayi-orange-dark);">Market</small>
+                </span>
+            </a>
+
+            <nav class="d-none d-lg-flex align-items-center gap-4 flex-grow-1">
+                <NavLink class="nav-link-custom" href="" Match="NavLinkMatch.All">@Localizer["NavHome"]</NavLink>
+                <NavLink class="nav-link-custom" href="boutique">@Localizer["NavShop"]</NavLink>
+                <NavLink class="nav-link-custom" href="grossistes">@Localizer["NavWholesale"]</NavLink>
+                <NavLink class="nav-link-custom" href="apropos">@Localizer["NavAbout"]</NavLink>
+                <NavLink class="nav-link-custom" href="contact">@Localizer["NavContact"]</NavLink>
+            </nav>
+
+            <div class="d-flex align-items-center gap-1 ms-auto">
+                <button class="icon-btn" aria-label="@Localizer["AriaSearch"]">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="icon-btn" aria-label="@Localizer["AriaAccount"]">
+                    <i class="bi bi-person"></i>
+                </button>
+                <button class="icon-btn position-relative" aria-label="@Localizer["AriaCart"]">
+                    <i class="bi bi-cart3"></i>
+                    <span class="cart-badge">0</span>
+                </button>
+                <LanguageToggle />
+                <button class="icon-btn d-lg-none" aria-label="Menu">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>

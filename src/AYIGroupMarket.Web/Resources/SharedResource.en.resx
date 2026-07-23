@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Nav -->
+  <data name="NavHome" xml:space="preserve"><value>Home</value></data>
+  <data name="NavShop" xml:space="preserve"><value>Shop</value></data>
+  <data name="NavWholesale" xml:space="preserve"><value>Wholesale</value></data>
+  <data name="NavAbout" xml:space="preserve"><value>About</value></data>
+  <data name="NavContact" xml:space="preserve"><value>Contact</value></data>
+  <data name="AriaSearch" xml:space="preserve"><value>Search</value></data>
+  <data name="AriaAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="AriaCart" xml:space="preserve"><value>Cart</value></data>
+
+  <!-- Hero -->
+  <data name="HeroEyebrow" xml:space="preserve"><value>Natural products specialist in Cameroon</value></data>
+  <data name="HeroH1" xml:space="preserve"><value>Quality products at the best prices, wholesale and retail.</value></data>
+  <data name="HeroLede" xml:space="preserve"><value>Discover our range of 100% natural FRUILEG juices, snacks, superfoods, and home &amp; car air fresheners — delivered all over Cameroon.</value></data>
+  <data name="CtaBuyNow" xml:space="preserve"><value>🛒 Buy now</value></data>
+  <data name="CtaWhatsapp" xml:space="preserve"><value>📲 Order on WhatsApp</value></data>
+  <data name="TrustStrip1" xml:space="preserve"><value>100% natural products</value></data>
+  <data name="TrustStrip2" xml:space="preserve"><value>Wholesale price from 12 units</value></data>
+  <data name="TrustStrip3" xml:space="preserve"><value>Secure payment</value></data>
+  <data name="HeroTag" xml:space="preserve"><value>Delivery all over Cameroon</value></data>
+
+  <!-- Categories -->
+  <data name="CatalogEyebrow" xml:space="preserve"><value>Our catalog</value></data>
+  <data name="CatalogH2" xml:space="preserve"><value>Five worlds, one marketplace</value></data>
+  <data name="CatalogP" xml:space="preserve"><value>From the pantry to the car, AYI GROUP brings everyday Cameroonian essentials together in one place.</value></data>
+  <data name="CatFood" xml:space="preserve"><value>Food &amp; Groceries</value></data>
+  <data name="CatHome" xml:space="preserve"><value>Fragrances &amp; Home</value></data>
+  <data name="CatAuto" xml:space="preserve"><value>Car Care</value></data>
+  <data name="CatAppliances" xml:space="preserve"><value>Home Appliances</value></data>
+  <data name="CatBath" xml:space="preserve"><value>Bathroom &amp; Tiling</value></data>
+  <data name="CatLink" xml:space="preserve"><value>View category →</value></data>
+  <data name="AutoLi1" xml:space="preserve"><value>Car air fresheners</value></data>
+  <data name="AutoLi2" xml:space="preserve"><value>Care products</value></data>
+  <data name="SoonBadge" xml:space="preserve"><value>Soon</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Coming soon</value></data>
+
+  <!-- Trust section -->
+  <data name="TrustEyebrow" xml:space="preserve"><value>Trust</value></data>
+  <data name="TrustH2" xml:space="preserve"><value>Why choose AYI GROUP?</value></data>
+  <data name="TrustP" xml:space="preserve"><value>A supply chain built for individual customers and wholesalers alike.</value></data>
+  <data name="Trust1" xml:space="preserve"><value>Authentic products</value></data>
+  <data name="Trust2" xml:space="preserve"><value>Wholesale prices</value></data>
+  <data name="Trust3" xml:space="preserve"><value>Delivery all over Cameroon</value></data>
+  <data name="Trust4" xml:space="preserve"><value>Secure payment</value></data>
+  <data name="Trust5" xml:space="preserve"><value>Responsive customer service</value></data>
+
+  <!-- Wholesale strip -->
+  <data name="WsEyebrow" xml:space="preserve"><value>Wholesale area</value></data>
+  <data name="WsH3" xml:space="preserve"><value>Buying in volume?</value></data>
+  <data name="WsP" xml:space="preserve"><value>Create a wholesale account to access carton pricing, minimum quantities, and the PDF catalog.</value></data>
+  <data name="WsBtn" xml:space="preserve"><value>Request a quote</value></data>
+
+  <!-- Footer -->
+  <data name="FooterDesc" xml:space="preserve"><value>Natural products, fragrance, and accessories specialist in Cameroon. Quality products at the best prices, wholesale and retail.</value></data>
+  <data name="FooterShop" xml:space="preserve"><value>Shop</value></data>
+  <data name="FooterCompany" xml:space="preserve"><value>Company</value></data>
+  <data name="FooterCity" xml:space="preserve"><value>Douala, Cameroon</value></data>
+  <data name="FooterRights" xml:space="preserve"><value>© 2026 AYI GROUP MARKET. All rights reserved.</value></data>
+  <data name="FooterTagline" xml:space="preserve"><value>The key to investment services</value></data>
+</root>

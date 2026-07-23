@@ -1,0 +1,148 @@
+/* ===========================================================
+   AYI GROUP MARKET — Design Tokens
+   Overrides Bootstrap 5's CSS variable layer with brand values
+   =========================================================== */
+
+:root {
+  /* Brand palette */
+  --ayi-green: #198754;
+  --ayi-green-dark: #146c43;
+  --ayi-green-deep: #0f4a37;
+  --ayi-orange: #F7931E;
+  --ayi-orange-dark: #dd7d0c;
+  --ayi-bg: #FFFFFF;
+  --ayi-bg-soft: #F8F9FA;
+  --ayi-ink: #122019;
+  --ayi-ink-soft: #5c6b64;
+  --ayi-line: #e6e9e7;
+  --ayi-radius: 14px;
+
+  /* --- Bootstrap variable overrides --- */
+  --bs-primary: var(--ayi-green);
+  --bs-primary-rgb: 25, 135, 84;
+  --bs-success: var(--ayi-green);
+  --bs-success-rgb: 25, 135, 84;
+
+  --bs-warning: var(--ayi-orange);
+  --bs-warning-rgb: 247, 147, 30;
+
+  --bs-body-color: var(--ayi-ink);
+  --bs-body-bg: var(--ayi-bg);
+  --bs-border-color: var(--ayi-line);
+  --bs-border-radius: var(--ayi-radius);
+  --bs-border-radius-lg: 18px;
+  --bs-border-radius-sm: 10px;
+
+  --bs-font-sans-serif: 'Inter', Arial, sans-serif;
+  --bs-secondary-color: var(--ayi-ink-soft);
+}
+
+body {
+  font-family: var(--bs-font-sans-serif);
+  background-color: var(--ayi-bg);
+  color: var(--ayi-ink);
+}
+
+/* Buttons: Bootstrap's .btn-success/.btn-warning now inherit the brand
+   colors above automatically via --bs-success/--bs-warning, but pill
+   shape + shadow accents from the prototype need explicit rules */
+.btn {
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.btn-success {
+  box-shadow: 0 4px 0 var(--ayi-green-deep);
+}
+.btn-success:hover {
+  background-color: var(--ayi-green-dark);
+  border-color: var(--ayi-green-dark);
+}
+
+.btn-outline-success {
+  color: var(--ayi-green-dark);
+  border-color: var(--ayi-green);
+}
+.btn-outline-success:hover {
+  background-color: #eef8f2;
+  color: var(--ayi-green-dark);
+}
+
+/* Soft section background utility, used repeatedly in the homepage */
+.bg-ayi-soft {
+  background-color: var(--ayi-bg-soft);
+}
+
+/* .bg-ayi-deep {
+  background-color: var(--ayi-green-deep);
+  color: #fff;
+} */
+
+.text-ayi-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--ayi-green-dark);
+}
+
+.bg-ayi-deep {
+  background-color: var(--ayi-green-deep) !important;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(155deg, var(--ayi-green) 0%, var(--ayi-green-dark) 100%);
+  color: #fff;
+  font-weight: 900;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 var(--ayi-green-deep);
+}
+
+.nav-link-custom {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--ayi-ink);
+  text-decoration: none;
+  padding: 6px 0;
+  position: relative;
+}
+.nav-link-custom:hover { color: var(--ayi-green-dark); }
+.nav-link-custom.active { color: var(--ayi-green-dark); }
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ayi-ink);
+}
+.icon-btn:hover {
+  background: var(--ayi-bg-soft);
+  border-color: var(--ayi-line);
+}
+
+.cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--ayi-orange);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
