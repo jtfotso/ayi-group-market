@@ -2,6 +2,7 @@ using AYIGroupMarket.Web.Components;
 using AYIGroupMarket.Infrastructure;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,14 +45,12 @@ app.UseRequestLocalization(localizationOptions);
 
 using (var scope = app.Services.CreateScope())
 {
-    await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
-
     var db = scope.ServiceProvider.GetRequiredService<AYIGroupMarket.Infrastructure.Persistence.AppDbContext>();
+
+    // Apply any pending migrations automatically
+    await db.Database.MigrateAsync();
+
+    await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
     await AYIGroupMarket.Infrastructure.Persistence.CatalogSeeder.SeedAsync(db);
 }
 
