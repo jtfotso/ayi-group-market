@@ -17,7 +17,7 @@ public class Product : BaseEntity
     public string ShortDescription { get; set; } = string.Empty;
     public string ShortDescriptionEn { get; set; } = string.Empty;
 
-    // Default pricing — used directly for products without variants
+    // Default pricing — used directly for products without the variants
     public decimal RetailPrice { get; set; }
     public decimal? WholesalePrice { get; set; }
     public int? MinimumWholesaleQuantity { get; set; }
