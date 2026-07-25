@@ -12,11 +12,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        services.AddDbContextFactory<AppDbContext>(options =>
+        options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-        // Map the Application-layer interface to the concrete Infrastructure implementation
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddTransient<IApplicationDbContext>(provider =>
+            provider.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {

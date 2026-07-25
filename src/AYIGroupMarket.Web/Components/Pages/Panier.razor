@@ -1,0 +1,114 @@
+@page "/panier"
+@inject ISender Sender
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@using AYIGroupMarket.Application.Features.Cart.GetCart
+@using AYIGroupMarket.Application.Features.Cart.UpdateCartItemQuantity
+@using AYIGroupMarket.Application.Features.Cart.RemoveCartItem
+@using System.Globalization
+
+<PageTitle>@(IsFr ? "Panier" : "Cart") — AYI GROUP MARKET</PageTitle>
+
+<div class="container py-5">
+    <h1 class="fw-bold mb-4">@(IsFr ? "Votre panier" : "Your cart")</h1>
+
+    @if (cart is null)
+    {
+        <p class="text-secondary">@(IsFr ? "Chargement..." : "Loading...")</p>
+    }
+    else if (cart.Items.Count == 0)
+    {
+        <p class="text-secondary mb-4">@(IsFr ? "Votre panier est vide." : "Your cart is empty.")</p>
+        <a href="/boutique" class="btn btn-success">@(IsFr ? "Continuer les achats" : "Continue shopping")</a>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                @foreach (var item in cart.Items)
+                {
+                    <div class="d-flex align-items-center gap-3 border-bottom py-3">
+                        <div class="bg-ayi-soft rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:72px;height:72px;">
+                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" alt="@item.ProductName" />
+                            }
+                            else
+                            {
+                                <span class="fs-3">🧃</span>
+                            }
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3 class="h6 fw-bold mb-0">@(IsFr ? item.ProductName : item.ProductNameEn)</h3>
+                            @if (item.VariantName is not null)
+                            {
+                                <small class="text-secondary">@(IsFr ? item.VariantName : item.VariantNameEn)</small>
+                            }
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <input type="number" min="1" class="form-control form-control-sm" style="width:70px;"
+                                       value="@item.Quantity"
+                                       @onchange="@(e => HandleQuantityChange(item.Id, e.Value))" />
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => HandleRemove(item.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="fw-bold text-success">@item.LineTotal.ToString("C")</div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bg-ayi-soft rounded-4 p-4">
+                    <h2 class="h5 fw-bold mb-3">@(IsFr ? "Résumé" : "Summary")</h2>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>@(IsFr ? "Sous-total" : "Subtotal")</span>
+                        <span class="fw-bold">@cart.Total.ToString("C")</span>
+                    </div>
+                    <p class="small text-secondary">@(IsFr ? "Frais de livraison calculés à l'étape suivante." : "Shipping calculated at next step.")</p>
+                    <a href="/commande" class="btn btn-success w-100 mt-2">@(IsFr ? "Passer la commande" : "Checkout")</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private AYIGroupMarket.Application.DTOs.CartDto? cart;
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        var ownerKey = await CartSession.GetOwnerKeyAsync();
+        cart = await Sender.Send(new GetCartQuery(ownerKey));
+    }
+
+    private async Task HandleQuantityChange(Guid cartItemId, object? value)
+    {
+        if (value is string s && int.TryParse(s, out var qty) && qty > 0)
+        {
+            var ownerKey = await CartSession.GetOwnerKeyAsync();
+            await Sender.Send(new UpdateCartItemQuantityCommand(ownerKey, cartItemId, qty));
+            await Load();
+            await CartNotifier.NotifyCartChangedAsync();
+        }
+    }
+
+    private async Task HandleRemove(Guid cartItemId)
+    {
+        var ownerKey = await CartSession.GetOwnerKeyAsync();
+        await Sender.Send(new RemoveCartItemCommand(ownerKey, cartItemId));
+        await Load();
+        await CartNotifier.NotifyCartChangedAsync();
+    }
+}

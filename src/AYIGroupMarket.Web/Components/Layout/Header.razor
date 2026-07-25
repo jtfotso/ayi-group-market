@@ -1,4 +1,9 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Cart.GetCart
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@implements IDisposable
 
 <header class="site-header sticky-top bg-white border-bottom">
     <div class="container">
@@ -27,10 +32,13 @@
                 <button class="icon-btn" aria-label="@Localizer["AriaAccount"]">
                     <i class="bi bi-person"></i>
                 </button>
-                <button class="icon-btn position-relative" aria-label="@Localizer["AriaCart"]">
+                <a href="/panier" class="icon-btn position-relative" aria-label="@Localizer["AriaCart"]">
                     <i class="bi bi-cart3"></i>
-                    <span class="cart-badge">0</span>
-                </button>
+                    @if (itemCount > 0)
+                    {
+                        <span class="cart-badge">@itemCount</span>
+                    }
+                </a>
                 <LanguageToggle />
                 <button class="icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-label="Menu">
                     <i class="bi bi-list"></i>
@@ -52,3 +60,44 @@
     </div>
 </div>
 </header>
+
+@code {
+    private int itemCount = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CartNotifier.OnCartChanged += HandleCartChanged;
+            await RefreshCartCount();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleCartChanged()
+    {
+        await RefreshCartCount();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CartNotifier.OnCartChanged -= HandleCartChanged;
+    }
+
+    @* protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RefreshCartCount();
+            StateHasChanged();
+        }
+    } *@
+
+    public async Task RefreshCartCount()
+    {
+        var ownerKey = await CartSession.GetOwnerKeyAsync();
+        var cart = await Sender.Send(new GetCartQuery(ownerKey));
+        itemCount = cart.ItemCount;
+    }
+}

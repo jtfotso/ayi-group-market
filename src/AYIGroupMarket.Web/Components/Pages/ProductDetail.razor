@@ -1,5 +1,8 @@
 @page "/boutique/{Slug}"
 @inject ISender Sender
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@using AYIGroupMarket.Application.Features.Cart.AddToCart
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
 @using AYIGroupMarket.Application.Features.Products.GetProductBySlug
 @using AYIGroupMarket.Application.Features.Products.GetProducts
@@ -76,8 +79,20 @@ else
                 }
 
                 <div class="d-flex gap-3 flex-wrap">
-                    <button class="btn btn-success btn-lg">@Localizer["CtaBuyNow"]</button>
-                    <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <label class="mb-0">@(IsFr ? "Quantité" : "Quantity")</label>
+                        <input type="number" class="form-control" style="width: 80px;" min="1" @bind="quantity" />
+                    </div>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button class="btn btn-success btn-lg" @onclick="HandleAddToCart" disabled="@isAdding">
+                            @(isAdding ? (IsFr ? "Ajout..." : "Adding...") : Localizer["CtaBuyNow"])
+                        </button>
+                        <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                    </div>
+                    @if (addedMessage is not null)
+                    {
+                        <p class="text-success fw-bold mt-2">@addedMessage</p>
+                    }
                 </div>
             </div>
         </div>
@@ -100,6 +115,10 @@ else
 }
 
 @code {
+    private int quantity = 1;
+    private bool isAdding = false;
+    private string? addedMessage;
+    
     [Parameter] public string Slug { get; set; } = "";
 
     private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
@@ -126,6 +145,27 @@ else
             selectedVariantId = product.Variants.FirstOrDefault()?.Id;
             selectedImageIndex = 0;
             similarProducts = await Sender.Send(new GetProductsQuery(CategoryId: product.CategoryId, PageSize: 8));
+        }
+    }
+
+    private async Task HandleAddToCart()
+    {
+        if (isAdding) return;
+
+        isAdding = true;
+        addedMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var ownerKey = await CartSession.GetOwnerKeyAsync();
+            await Sender.Send(new AddToCartCommand(ownerKey, product!.Id, selectedVariantId, quantity));
+            addedMessage = IsFr ? "Ajouté au panier !" : "Added to cart!";
+            await CartNotifier.NotifyCartChangedAsync();
+        }
+        finally
+        {
+            isAdding = false;
         }
     }
 }

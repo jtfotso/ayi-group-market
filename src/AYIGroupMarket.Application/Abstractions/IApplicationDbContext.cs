@@ -10,6 +10,8 @@ public interface IApplicationDbContext
     DbSet<ProductImage> ProductImages { get; }
     DbSet<ProductVariant> ProductVariants { get; }
     DbSet<ProductPrice> ProductPrices { get; }
+    DbSet<Cart> Carts { get; }
+    DbSet<CartItem> CartItems { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

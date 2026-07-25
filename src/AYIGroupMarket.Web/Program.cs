@@ -4,6 +4,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using AYIGroupMarket.Application;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.AddLocalization();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<AYIGroupMarket.Web.Services.CartSessionProvider>();
+builder.Services.AddScoped<AYIGroupMarket.Web.Services.CartNotifier>();
 
 var supportedCultures = new[] { "fr", "en" };
 var localizationOptions = new RequestLocalizationOptions()
@@ -42,6 +45,9 @@ builder.Services.Configure<RequestLocalizationOptions>(opt =>
     opt.RequestCultureProviders = localizationOptions.RequestCultureProviders;
 });
 
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "..", "..", ".dataprotection-keys")))
+    .SetApplicationName("AYIGroupMarket");
 var app = builder.Build();
 
 
@@ -49,11 +55,10 @@ app.UseRequestLocalization(localizationOptions);
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AYIGroupMarket.Infrastructure.Persistence.AppDbContext>();
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AYIGroupMarket.Infrastructure.Persistence.AppDbContext>>();
+    await using var db = await dbFactory.CreateDbContextAsync();
 
-    // Apply any pending migrations automatically
     await db.Database.MigrateAsync();
-
     await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
     await AYIGroupMarket.Infrastructure.Persistence.CatalogSeeder.SeedAsync(db);
 }
