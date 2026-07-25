@@ -47,6 +47,14 @@ using (var scope = app.Services.CreateScope())
     await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
+
+    var db = scope.ServiceProvider.GetRequiredService<AYIGroupMarket.Infrastructure.Persistence.AppDbContext>();
+    await AYIGroupMarket.Infrastructure.Persistence.CatalogSeeder.SeedAsync(db);
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

@@ -1,3 +1,4 @@
+using AYIGroupMarket.Domain.Entities;
 using AYIGroupMarket.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
     }
 
-    // DbSets for domain entities get added here as each feature lands
-    // (Phase 2 will add Products, ProductCategories, etc.)
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
