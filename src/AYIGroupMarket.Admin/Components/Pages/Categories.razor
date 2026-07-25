@@ -1,0 +1,125 @@
+@page "/categories"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Categories.GetCategories
+@using AYIGroupMarket.Application.Features.Categories.CreateCategory
+@using AYIGroupMarket.Application.Features.Categories.UpdateCategory
+@using AYIGroupMarket.Application.Features.Categories.DeleteCategory
+@using AYIGroupMarket.Application.DTOs
+@using MediatR
+
+<PageTitle>Admin — Categories</PageTitle>
+
+<div class="container py-4">
+    <h1>Categories</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Icon</th><th>Name (FR)</th><th>Name (EN)</th><th>Slug</th><th>Order</th><th>Active</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (categories is not null)
+            {
+                @foreach (var c in categories)
+                {
+                    <tr>
+                        <td>@c.Icon</td>
+                        <td>@c.Name</td>
+                        <td>@c.NameEn</td>
+                        <td>@c.Slug</td>
+                        <td>@c.DisplayOrder</td>
+                        <td>@(c.IsActive ? "Yes" : "Bientôt")</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => Edit(c)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(c.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <h2>@(editingId is null ? "New Category" : "Edit Category")</h2>
+    <EditForm Model="@form" OnValidSubmit="Save">
+        <div class="row g-2">
+            <div class="col-md-3"><input class="form-control" placeholder="Icon (emoji)" @bind="form.Icon" /></div>
+            <div class="col-md-3"><input class="form-control" placeholder="Name FR" @bind="form.Name" /></div>
+            <div class="col-md-3"><input class="form-control" placeholder="Name EN" @bind="form.NameEn" /></div>
+            <div class="col-md-3"><input class="form-control" placeholder="Slug" @bind="form.Slug" /></div>
+            <div class="col-md-2"><input type="number" class="form-control" placeholder="Order" @bind="form.DisplayOrder" /></div>
+            <div class="col-md-2 form-check mt-2">
+                <input type="checkbox" class="form-check-input" @bind="form.IsActive" />
+                <label class="form-check-label">Active</label>
+            </div>
+        </div>
+        <button class="btn btn-success mt-3" type="submit">Save</button>
+        @if (editingId is not null)
+        {
+            <button class="btn btn-outline-secondary mt-3" type="button" @onclick="ResetForm">Cancel</button>
+        }
+    </EditForm>
+</div>
+
+@code {
+    private List<ProductCategoryDto>? categories;
+    private Guid? editingId;
+    private CategoryFormModel form = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        categories = await Sender.Send(new GetCategoriesQuery(IncludeInactive: true));
+    }
+
+    private void Edit(ProductCategoryDto c)
+    {
+        editingId = c.Id;
+        form = new CategoryFormModel
+        {
+            Icon = c.Icon, Name = c.Name, NameEn = c.NameEn,
+            Slug = c.Slug, DisplayOrder = c.DisplayOrder, IsActive = c.IsActive
+        };
+    }
+
+    private void ResetForm()
+    {
+        editingId = null;
+        form = new CategoryFormModel();
+    }
+
+    private async Task Save()
+    {
+        if (editingId is null)
+        {
+            await Sender.Send(new CreateCategoryCommand(
+                form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
+        }
+        else
+        {
+            await Sender.Send(new UpdateCategoryCommand(
+                editingId.Value, form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
+        }
+
+        ResetForm();
+        await Load();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await Sender.Send(new DeleteCategoryCommand(id));
+        await Load();
+    }
+
+    public class CategoryFormModel
+    {
+        public string Icon { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string NameEn { get; set; } = "";
+        public string Slug { get; set; } = "";
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}
