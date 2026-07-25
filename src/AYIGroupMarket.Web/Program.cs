@@ -3,6 +3,7 @@ using AYIGroupMarket.Infrastructure;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using AYIGroupMarket.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddLocalization();
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var supportedCultures = new[] { "fr", "en" };
 var localizationOptions = new RequestLocalizationOptions()

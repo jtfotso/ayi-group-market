@@ -1,3 +1,4 @@
+using AYIGroupMarket.Application.Abstractions;
 using AYIGroupMarket.Infrastructure.Identity;
 using AYIGroupMarket.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,9 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        // Map the Application-layer interface to the concrete Infrastructure implementation
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
