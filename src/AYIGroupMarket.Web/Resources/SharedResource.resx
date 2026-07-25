@@ -64,4 +64,11 @@
   <data name="FooterCity" xml:space="preserve"><value>Douala, Cameroun</value></data>
   <data name="FooterRights" xml:space="preserve"><value>© 2026 AYI GROUP MARKET. Tous droits réservés.</value></data>
   <data name="FooterTagline" xml:space="preserve"><value>La clé des services d'investissement</value></data>
+
+  <data name="StampNatural" xml:space="preserve"><value>Naturel</value></data>
+  <data name="StampQuality" xml:space="preserve"><value>Qualité</value></data>
+  <data name="Bottle1" xml:space="preserve"><value>Ananas Gingembre</value></data>
+  <data name="Bottle2" xml:space="preserve"><value>Pur Jus Ananas</value></data>
+  <data name="Bottle3" xml:space="preserve"><value>Goyave</value></data>
+  <data name="Bottle4" xml:space="preserve"><value>Ananas Mangue</value></data>
 </root>

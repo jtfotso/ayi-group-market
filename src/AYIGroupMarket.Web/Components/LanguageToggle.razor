@@ -1,9 +1,9 @@
 @inject NavigationManager Nav
 
-<div class="btn-group btn-group-sm" role="group" aria-label="Language selector">
-    <a class="btn @(currentCulture == "fr" ? "btn-success" : "btn-outline-success")"
+<div class="lang-toggle">
+    <a class="lang-btn @(currentCulture == "fr" ? "is-active" : "")"
        href="@BuildCultureUrl("fr")">FR</a>
-    <a class="btn @(currentCulture == "en" ? "btn-success" : "btn-outline-success")"
+    <a class="lang-btn @(currentCulture == "en" ? "is-active" : "")"
        href="@BuildCultureUrl("en")">EN</a>
 </div>
 

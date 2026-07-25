@@ -1,0 +1,41 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <h4>AYI GROUP MARKET</h4>
+                <p class="footer-desc">@Localizer["FooterDesc"]</p>
+            </div>
+            <div class="col-6 col-md-2 offset-md-1">
+                <h4>@Localizer["FooterShop"]</h4>
+                <ul>
+                    <li><a href="/boutique">@Localizer["CatFood"]</a></li>
+                    <li><a href="/boutique">@Localizer["CatHome"]</a></li>
+                    <li><a href="/boutique">@Localizer["CatAuto"]</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md-2">
+                <h4>@Localizer["FooterCompany"]</h4>
+                <ul>
+                    <li><a href="/apropos">@Localizer["NavAbout"]</a></li>
+                    <li><a href="/grossistes">@Localizer["NavWholesale"]</a></li>
+                    <li><a href="/contact">@Localizer["NavContact"]</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md-3">
+                <h4>@Localizer["NavContact"]</h4>
+                <ul>
+                    <li>@Localizer["CtaWhatsapp"]</li>
+                    <li>@Localizer["FooterCity"]</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>@Localizer["FooterRights"]</span>
+            <span>@Localizer["FooterTagline"]</span>
+        </div>
+    </div>
+</footer>

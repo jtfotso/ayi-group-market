@@ -43,6 +43,130 @@ body {
   color: var(--ayi-ink);
 }
 
+/* .site-header .container,
+main .container {
+  max-width: 1240px;
+} */
+
+/* ===== Hero visual: stylised crate of bottles ===== */
+.hero-visual {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 380px;
+}
+
+.stamp {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 3px dashed var(--ayi-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: rotate(-14deg);
+  background: #fff;
+  z-index: 3;
+}
+.stamp span {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ayi-orange-dark);
+  letter-spacing: .03em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.crate {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(180deg, #d9c9a3, #c7b285);
+  border-radius: 10px 10px 4px 4px;
+  padding: 22px 22px 0;
+  box-shadow: 0 20px 40px -18px rgba(18, 32, 25, .35);
+}
+.crate::before {
+  content: '';
+  position: absolute;
+  left: 14px; right: 14px; top: 10px; bottom: 10px;
+  border: 2px solid rgba(0, 0, 0, .08);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.bottle-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+}
+.bottle {
+  width: 52px;
+  border-radius: 8px 8px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: inset 0 -6px 10px rgba(0, 0, 0, .12);
+}
+.bottle .cap { width: 22px; height: 12px; border-radius: 3px 3px 0 0; margin-bottom: -2px; }
+.bottle .label {
+  margin-top: 8px; width: 38px; height: 26px;
+  background: #fff; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 800; color: var(--ayi-ink);
+  text-align: center; line-height: 1.1;
+}
+.b1 { height: 150px; background: linear-gradient(180deg, #ffd15c, #f7931e); }
+.b1 .cap { background: #e07b00; }
+.b2 { height: 175px; background: linear-gradient(180deg, #5cc98a, #198754); }
+.b2 .cap { background: #0f6b3f; }
+.b3 { height: 135px; background: linear-gradient(180deg, #ff8f6b, #e2531f); }
+.b3 .cap { background: #b8380f; }
+.b4 { height: 160px; background: linear-gradient(180deg, #8fd6c9, #1e9c86); }
+.b4 .cap { background: #0f6b5c; }
+
+.hero-tag {
+  position: absolute;
+  bottom: -16px; right: 24px;
+  background: #fff;
+  border: 1px solid var(--ayi-line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 24px -12px rgba(18, 32, 25, .25);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 4;
+}
+.hero-tag .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ayi-green);
+}
+
+/* ===== Diagonal ribbon badge for "coming soon" categories ===== */
+.soon-badge-ribbon {
+  position: absolute;
+  top: 16px;
+  right: -34px;
+  background: var(--ayi-orange);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 40px;
+  transform: rotate(35deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+}
+
 /* Buttons: Bootstrap's .btn-success/.btn-warning now inherit the brand
    colors above automatically via --bs-success/--bs-warning, but pill
    shape + shadow accents from the prototype need explicit rules */
@@ -87,7 +211,8 @@ body {
 }
 
 .bg-ayi-deep {
-  background-color: var(--ayi-green-deep) !important;
+  background-color: var(--ayi-green-deep) ;
+  color: #fff;
 }
 
 .logo-mark {
@@ -145,4 +270,79 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--ayi-line);
+  border-radius: 999px;
+  padding: 3px;
+  background: var(--ayi-bg-soft);
+}
+
+.lang-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--ayi-ink-soft);
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+.lang-btn:hover {
+  color: var(--ayi-ink);
+}
+.lang-btn.is-active {
+  background: var(--ayi-green);
+  color: #fff;
+}
+
+.site-footer {
+  background: #0e1712;
+  color: #cfe0d6;
+  padding: 56px 0 26px;
+}
+.site-footer h4 {
+  color: #fff;
+  font-size: 14px;
+  margin: 0 0 14px;
+  letter-spacing: .02em;
+}
+.site-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-footer li {
+  margin-bottom: 9px;
+  font-size: 13.5px;
+}
+.site-footer a {
+  color: #cfe0d6;
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: #fff;
+}
+.footer-desc {
+  max-width: 280px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #cfe0d6;
+}
+.footer-bottom {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  font-size: 12.5px;
+  color: #8ea495;
+}
+
+h1:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(248, 249, 250, 0.35);
+  border-radius: 4px;
 }
