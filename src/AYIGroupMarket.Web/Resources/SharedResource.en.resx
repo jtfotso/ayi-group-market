@@ -71,4 +71,6 @@
   <data name="Bottle2" xml:space="preserve"><value>Pure Pineapple Juice</value></data>
   <data name="Bottle3" xml:space="preserve"><value>Guava</value></data>
   <data name="Bottle4" xml:space="preserve"><value>Pineapple Mango</value></data>
+  <data name="AllProducts" xml:space="preserve"><value>Tous les produits</value></data> <!-- en: All products -->
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Rechercher...</value></data> <!-- en: Search... -->
 </root>

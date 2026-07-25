@@ -1,0 +1,24 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+<section class="bg-ayi-deep py-5">
+    <div class="container">
+        <span class="text-ayi-eyebrow" style="color:#a7d9bf;">@Localizer["TrustEyebrow"]</span>
+        <h2 class="fw-bold mt-2 mb-2 text-white">@Localizer["TrustH2"]</h2>
+        <p class="mb-4" style="color:#cfe8db; max-width:600px;">@Localizer["TrustP"]</p>
+
+        <div class="row g-3">
+            @{
+                var trustItems = new[] { "Trust1", "Trust2", "Trust3", "Trust4", "Trust5" };
+            }
+            @for (int i = 0; i < trustItems.Length; i++)
+            {
+                var key = trustItems[i];
+                <div class="col-6 col-md-4 col-lg">
+                    <div class="p-3 rounded-4 h-100" style="background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);">
+                        <span class="d-block small fw-bold mb-2" style="color:var(--ayi-orange);">0@(i + 1)</span>
+                        <p class="mb-0 fw-semibold text-white small">@Localizer[key]</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

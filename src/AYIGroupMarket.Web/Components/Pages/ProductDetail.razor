@@ -1,0 +1,131 @@
+@page "/boutique/{Slug}"
+@inject ISender Sender
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@using AYIGroupMarket.Application.Features.Products.GetProductBySlug
+@using AYIGroupMarket.Application.Features.Products.GetProducts
+@using System.Globalization
+
+<PageTitle>@(product?.Name ?? "Produit") — AYI GROUP MARKET</PageTitle>
+
+@if (product is null)
+{
+    <div class="container py-5">
+        <p class="text-secondary">@(IsFr ? "Produit introuvable." : "Product not found.")</p>
+        <a href="/boutique" class="btn btn-outline-success">@(IsFr ? "Retour à la boutique" : "Back to shop")</a>
+    </div>
+}
+else
+{
+    <div class="container py-5">
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <div class="ratio ratio-1x1 bg-ayi-soft rounded-4 d-flex align-items-center justify-content-center mb-3">
+                    @if (product.ImageUrls.Any())
+                    {
+                        <img src="@product.ImageUrls[selectedImageIndex]" class="w-100 h-100" style="object-fit:cover; border-radius: var(--ayi-radius);" alt="@DisplayName" />
+                    }
+                    else
+                    {
+                        <span class="display-1">🧃</span>
+                    }
+                </div>
+                @if (product.ImageUrls.Count > 1)
+                {
+                    <div class="d-flex gap-2">
+                        @for (int i = 0; i < product.ImageUrls.Count; i++)
+                        {
+                            var idx = i;
+                            <button class="btn btn-sm @(idx == selectedImageIndex ? "btn-success" : "btn-outline-secondary")"
+                                    @onclick="() => selectedImageIndex = idx">@(idx + 1)</button>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <span class="text-ayi-eyebrow">@(IsFr ? product.CategoryName : product.CategoryNameEn)</span>
+                <h1 class="fw-bold mt-2 mb-3">@DisplayName</h1>
+                <p class="text-secondary mb-4">@DisplayDescription</p>
+
+                @if (product.Variants.Any())
+                {
+                    <h2 class="h6 fw-bold mb-2">@(IsFr ? "Choisir un format" : "Choose a size")</h2>
+                    <div class="d-flex gap-2 flex-wrap mb-4">
+                        @foreach (var variant in product.Variants)
+                        {
+                            var isSelected = selectedVariantId == variant.Id;
+                            <button class="btn @(isSelected ? "btn-success" : "btn-outline-success")"
+                                    @onclick="() => selectedVariantId = variant.Id">
+                                @(IsFr ? variant.Name : variant.NameEn)
+                            </button>
+                        }
+                    </div>
+
+                    @if (GetSelectedRetailPrice() is not null)
+                    {
+                        <p class="fs-3 fw-bold text-success mb-4">@GetSelectedRetailPrice()!.Amount.ToString("C")</p>
+                    }
+                    else
+                    {
+                        <p class="text-secondary mb-4 fst-italic">@(IsFr ? "Prix à venir" : "Price coming soon")</p>
+                    }
+                }
+                else
+                {
+                    <p class="fs-3 fw-bold text-success mb-4">@product.RetailPrice.ToString("C")</p>
+                }
+
+                <div class="d-flex gap-3 flex-wrap">
+                    <button class="btn btn-success btn-lg">@Localizer["CtaBuyNow"]</button>
+                    <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (similarProducts is not null && similarProducts.Items.Any())
+    {
+        <section class="py-5 bg-ayi-soft">
+            <div class="container">
+                <h2 class="h4 fw-bold mb-4">@(IsFr ? "Produits similaires" : "Similar products")</h2>
+                <div class="row g-3">
+                    @foreach (var p in similarProducts.Items.Where(p => p.Id != product.Id).Take(4))
+                    {
+                        <ProductCard Product="p" />
+                    }
+                </div>
+            </div>
+        </section>
+    }
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
+    {
+        var selectedVariant = product!.Variants.FirstOrDefault(v => v.Id == selectedVariantId) ?? product.Variants.First();
+        return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
+    }
+
+    private AYIGroupMarket.Application.DTOs.ProductDetailDto? product;
+    private AYIGroupMarket.Application.Features.Products.GetProducts.PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? similarProducts;
+    private int selectedImageIndex = 0;
+    private Guid? selectedVariantId;
+
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+    private string DisplayName => IsFr ? product!.Name : product!.NameEn;
+    private string DisplayDescription => IsFr ? product!.Description : product!.DescriptionEn;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        product = await Sender.Send(new GetProductBySlugQuery(Slug));
+
+        if (product is not null)
+        {
+            selectedVariantId = product.Variants.FirstOrDefault()?.Id;
+            selectedImageIndex = 0;
+            similarProducts = await Sender.Send(new GetProductsQuery(CategoryId: product.CategoryId, PageSize: 8));
+        }
+    }
+}

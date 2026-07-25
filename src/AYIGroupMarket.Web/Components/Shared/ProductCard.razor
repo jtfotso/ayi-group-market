@@ -1,0 +1,32 @@
+@using AYIGroupMarket.Application.DTOs
+@using System.Globalization
+
+<div class="col-6 col-md-4 col-lg-3">
+    <a href="/boutique/@Product.Slug" class="text-decoration-none text-dark">
+        <div class="card h-100 border-0 bg-ayi-soft rounded-4 overflow-hidden">
+            <div class="ratio ratio-1x1 bg-white d-flex align-items-center justify-content-center">
+                @if (!string.IsNullOrEmpty(Product.PrimaryImageUrl))
+                {
+                    <img src="@Product.PrimaryImageUrl" class="w-100 h-100" style="object-fit:cover;" alt="@DisplayName" />
+                }
+                else
+                {
+                    <span class="fs-1">🧃</span>
+                }
+            </div>
+            <div class="card-body">
+                <h3 class="h6 fw-bold mb-1">@DisplayName</h3>
+                <p class="small text-secondary mb-2">@DisplayShortDescription</p>
+                <span class="fw-bold text-success">@Product.RetailPrice.ToString("C")</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ProductListItemDto Product { get; set; } = null!;
+
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+    private string DisplayName => IsFr ? Product.Name : Product.NameEn;
+    private string DisplayShortDescription => IsFr ? Product.ShortDescription : Product.ShortDescriptionEn;
+}

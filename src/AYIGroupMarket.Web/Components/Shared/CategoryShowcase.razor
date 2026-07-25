@@ -1,0 +1,56 @@
+@inject ISender Sender
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@using AYIGroupMarket.Application.Features.Categories.GetCategories
+@using System.Globalization
+
+<section class="py-5">
+    <div class="container">
+        <span class="text-ayi-eyebrow">@Localizer["CatalogEyebrow"]</span>
+        <h2 class="fw-bold mt-2 mb-2">@Localizer["CatalogH2"]</h2>
+        <p class="text-secondary mb-4" style="max-width: 600px;">@Localizer["CatalogP"]</p>
+
+        <div class="row g-3">
+            @if (categories is not null)
+            {
+                @foreach (var c in categories)
+                {
+                    var isFr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+                    var displayName = isFr ? c.Name : c.NameEn;
+
+                    <div class="col-6 col-md-4 col-lg">
+                        @if (c.IsActive)
+                        {
+                            <div class="card h-100 border-0 bg-ayi-soft rounded-4 p-2">
+                                <div class="card-body">
+                                    <div class="fs-2 mb-2">@c.Icon</div>
+                                    <h3 class="h6 fw-bold">@displayName</h3>
+                                    <a href="/boutique?categoryId=@c.Id" class="small fw-bold text-success text-decoration-none">@Localizer["CatLink"]</a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card h-100 border-0 rounded-4 p-2 position-relative overflow-hidden" style="background:#fbfbfb;">
+                                <span class="soon-badge-ribbon">@Localizer["SoonBadge"]</span>
+                                <div class="card-body">
+                                    <div class="fs-2 mb-2">@c.Icon</div>
+                                    <h3 class="h6 fw-bold text-secondary">@displayName</h3>
+                                    <p class="small text-secondary mb-0">@Localizer["ComingSoon"]</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private List<AYIGroupMarket.Application.DTOs.ProductCategoryDto>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await Sender.Send(new GetCategoriesQuery(IncludeInactive: true));
+    }
+}

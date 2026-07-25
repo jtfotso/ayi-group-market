@@ -1,6 +1,124 @@
 @page "/boutique"
-<PageTitle>Boutique — AYI GROUP MARKET</PageTitle>
+@inject ISender Sender
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@inject NavigationManager Nav
+@using AYIGroupMarket.Application.Features.Products.GetProducts
+@using AYIGroupMarket.Application.Features.Categories.GetCategories
+@using System.Globalization
+
+<PageTitle>@Localizer["NavShop"] — AYI GROUP MARKET</PageTitle>
+
 <div class="container py-5">
-    <h1>Boutique</h1>
-    <p class="text-secondary">Coming soon — Phase 3.</p>
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <h2 class="h5 fw-bold mb-3">@Localizer["CatalogEyebrow"]</h2>
+
+            <div class="mb-3">
+                <input type="search" class="form-control" placeholder="@(IsFr ? "Rechercher..." : "Search...")"
+                       @bind="searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+            </div>
+
+            <div class="list-group">
+                <button class="list-group-item list-group-item-action @(selectedCategoryId is null ? "active" : "")"
+                        @onclick="() => SelectCategory(null)">
+                    @(IsFr ? "Tous les produits" : "All products")
+                </button>
+                @if (categories is not null)
+                {
+                    @foreach (var c in categories.Where(c => c.IsActive))
+                    {
+                        <button class="list-group-item list-group-item-action @(selectedCategoryId == c.Id ? "active" : "")"
+                                @onclick="() => SelectCategory(c.Id)">
+                            @c.Icon @(IsFr ? c.Name : c.NameEn)
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            @if (products is null)
+            {
+                <p class="text-secondary">@(IsFr ? "Chargement..." : "Loading...")</p>
+            }
+            else if (products.Items.Count == 0)
+            {
+                <p class="text-secondary">@(IsFr ? "Aucun produit trouvé." : "No products found.")</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var product in products.Items)
+                    {
+                        <ProductCard Product="product" />
+                    }
+                </div>
+
+                @if (products.TotalCount > products.PageSize)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination">
+                            @for (int i = 1; i <= Math.Ceiling((double)products.TotalCount / products.PageSize); i++)
+                            {
+                                var pageNum = i;
+                                <li class="page-item @(pageNum == currentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(pageNum)">@pageNum</button>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
 </div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "categoryId")]
+    public Guid? CategoryIdFromQuery { get; set; }
+
+    private List<AYIGroupMarket.Application.DTOs.ProductCategoryDto>? categories;
+    private AYIGroupMarket.Application.Features.Products.GetProducts.PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? products;
+
+    private Guid? selectedCategoryId;
+    private string searchTerm = "";
+    private int currentPage = 1;
+    private const int PageSize = 12;
+
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnInitializedAsync()
+    {
+        selectedCategoryId = CategoryIdFromQuery;
+        categories = await Sender.Send(new GetCategoriesQuery(IncludeInactive: true));
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        products = await Sender.Send(new GetProductsQuery(
+            CategoryId: selectedCategoryId,
+            SearchTerm: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+            Page: currentPage,
+            PageSize: PageSize));
+    }
+
+    private async Task SelectCategory(Guid? categoryId)
+    {
+        selectedCategoryId = categoryId;
+        currentPage = 1;
+        await LoadProducts();
+    }
+
+    private async Task OnSearchChanged(KeyboardEventArgs e)
+    {
+        currentPage = 1;
+        await LoadProducts();
+    }
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadProducts();
+    }
+}
