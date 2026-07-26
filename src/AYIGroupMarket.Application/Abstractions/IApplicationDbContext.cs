@@ -1,5 +1,6 @@
 using AYIGroupMarket.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+//using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace AYIGroupMarket.Application.Abstractions;
 
@@ -12,6 +13,6 @@ public interface IApplicationDbContext
     DbSet<ProductPrice> ProductPrices { get; }
     DbSet<Cart> Carts { get; }
     DbSet<CartItem> CartItems { get; }
-
+    //ChangeTracker ChangeTracker { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

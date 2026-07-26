@@ -41,6 +41,9 @@ public class AddToCartCommandHandler(IApplicationDbContext db) : IRequestHandler
         var cart = await db.Carts
             .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.OwnerKey == request.OwnerKey, cancellationToken);
+        
+        //Console.WriteLine($"[AddToCart] OwnerKey={request.OwnerKey}, ProductId={request.ProductId}, VariantId={request.VariantId}");
+        //Console.WriteLine($"[AddToCart] Cart found: {cart is not null}, Cart.Id={cart?.Id}, Items count={cart?.Items.Count ?? 0}");
 
         if (cart is null)
         {
@@ -50,6 +53,8 @@ public class AddToCartCommandHandler(IApplicationDbContext db) : IRequestHandler
 
         var existingItem = cart.Items.FirstOrDefault(i =>
             i.ProductId == request.ProductId && i.ProductVariantId == request.VariantId);
+        
+        //Console.WriteLine($"[AddToCart] existingItem found: {existingItem is not null}, existingItem.Id={existingItem?.Id}");
 
         if (existingItem is not null)
         {
@@ -58,14 +63,23 @@ public class AddToCartCommandHandler(IApplicationDbContext db) : IRequestHandler
         }
         else
         {
-            cart.Items.Add(new Domain.Entities.CartItem
+            var newItem = new Domain.Entities.CartItem
             {
+                CartId = cart.Id,
                 ProductId = request.ProductId,
                 ProductVariantId = request.VariantId,
                 UnitPrice = unitPrice,
                 Quantity = request.Quantity
-            });
+            };
+
+            db.CartItems.Add(newItem);
         }
+
+        // Diagnostic: dump every tracked entity's state before saving
+        /* foreach (var entry in db.ChangeTracker.Entries())
+        {
+            Console.WriteLine($"[AddToCart] Tracked entity: {entry.Entity.GetType().Name}, State={entry.State}, Id={entry.Property("Id").CurrentValue}");
+        } */
 
         await db.SaveChangesAsync(cancellationToken);
         return cart.Id;
