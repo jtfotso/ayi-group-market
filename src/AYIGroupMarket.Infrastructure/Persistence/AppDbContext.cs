@@ -19,7 +19,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
-
+    public DbSet<ShippingZone> ShippingZones => Set<ShippingZone>();
+    public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // required — configures Identity's own tables

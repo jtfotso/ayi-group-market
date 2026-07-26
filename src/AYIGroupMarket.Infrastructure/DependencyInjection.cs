@@ -32,6 +32,8 @@ public static class DependencyInjection
             options.AccessDeniedPath = "/account/access-denied";
         });
 
+        services.AddScoped<IOrderNumberGenerator, Services.OrderNumberGenerator>();
+
         return services;
     }
 }

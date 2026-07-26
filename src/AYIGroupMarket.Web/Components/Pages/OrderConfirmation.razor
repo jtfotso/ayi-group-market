@@ -1,0 +1,48 @@
+@page "/commande/confirmation/{OrderNumber}"
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Orders.GetOrderByNumber
+@using System.Globalization
+
+<PageTitle>@(IsFr ? "Confirmation" : "Confirmation") — AYI GROUP MARKET</PageTitle>
+
+<div class="container py-5 text-center">
+    @if (order is null)
+    {
+        <p class="text-secondary">@(IsFr ? "Commande introuvable." : "Order not found.")</p>
+    }
+    else
+    {
+        <div class="fs-1 mb-3">✅</div>
+        <h1 class="fw-bold mb-2">@(IsFr ? "Merci pour votre commande !" : "Thank you for your order!")</h1>
+        <p class="text-secondary mb-4">
+            @(IsFr ? "Numéro de commande" : "Order number"): <strong>@order.OrderNumber</strong>
+        </p>
+
+        <div class="bg-ayi-soft rounded-4 p-4 mx-auto text-start" style="max-width: 500px;">
+            @foreach (var item in order.Items)
+            {
+                <div class="d-flex justify-content-between small py-1 border-bottom">
+                    <span>@(item.Quantity)x @(IsFr ? item.ProductName : item.ProductNameEn)</span>
+                    <span>@item.LineTotal.ToString("C")</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between fw-bold mt-2">
+                <span>Total</span>
+                <span>@order.Total.ToString("C")</span>
+            </div>
+        </div>
+
+        <a href="/" class="btn btn-success mt-4">@(IsFr ? "Retour à l'accueil" : "Back to home")</a>
+    }
+</div>
+
+@code {
+    [Parameter] public string OrderNumber { get; set; } = "";
+    private AYIGroupMarket.Application.DTOs.OrderDto? order;
+    private bool IsFr => System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        order = await Sender.Send(new GetOrderByNumberQuery(OrderNumber));
+    }
+}

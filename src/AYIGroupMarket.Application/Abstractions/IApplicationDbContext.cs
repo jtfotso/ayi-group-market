@@ -13,6 +13,10 @@ public interface IApplicationDbContext
     DbSet<ProductPrice> ProductPrices { get; }
     DbSet<Cart> Carts { get; }
     DbSet<CartItem> CartItems { get; }
-    //ChangeTracker ChangeTracker { get; }
+    DbSet<ShippingZone> ShippingZones { get; }
+    DbSet<ShippingRate> ShippingRates { get; }
+    DbSet<Address> Addresses { get; }
+    DbSet<Order> Orders { get; }
+    DbSet<OrderItem> OrderItems { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

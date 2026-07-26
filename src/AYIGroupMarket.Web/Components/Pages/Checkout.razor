@@ -1,0 +1,315 @@
+@page "/commande"
+@inject ISender Sender
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@inject NavigationManager Nav
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@using AYIGroupMarket.Application.Features.Cart.GetCart
+@using AYIGroupMarket.Application.Features.Shipping.GetShippingZones
+@using AYIGroupMarket.Application.Features.Orders.CreateOrder
+@using AYIGroupMarket.Application.DTOs
+@using AYIGroupMarket.Domain.Enums
+@using System.Globalization
+
+<PageTitle>@(IsFr ? "Commande" : "Checkout") — AYI GROUP MARKET</PageTitle>
+
+<div class="container py-5">
+    <h1 class="fw-bold mb-4">@(IsFr ? "Passer la commande" : "Checkout")</h1>
+
+    @if (cart is null || zones is null)
+    {
+        <p class="text-secondary">@(IsFr ? "Chargement..." : "Loading...")</p>
+    }
+    else if (cart.Items.Count == 0)
+    {
+        <p class="text-secondary mb-4">@(IsFr ? "Votre panier est vide." : "Your cart is empty.")</p>
+        <a href="/boutique" class="btn btn-success">@(IsFr ? "Aller à la boutique" : "Go to shop")</a>
+    }
+    else
+    {
+        <!-- Step indicator -->
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+            @for (int i = 1; i <= 5; i++)
+            {
+                var stepNum = i;
+                <span class="badge rounded-pill @(stepNum == currentStep ? "bg-success" : stepNum < currentStep ? "bg-secondary" : "bg-light text-dark border")">
+                    @stepNum. @StepLabel(stepNum)
+                </span>
+            }
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                @if (currentStep == 1)
+                {
+                    <!-- Step 1: Customer Information -->
+                    <div class="bg-ayi-soft rounded-4 p-4">
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Informations client" : "Customer information")</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Nom complet" : "Full name")</label>
+                                <input class="form-control" @bind="fullName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Téléphone" : "Phone")</label>
+                                <input class="form-control" @bind="phone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" @bind="email" />
+                            </div>
+                        </div>
+                        <button class="btn btn-success mt-4" @onclick="() => GoToStep(2)" disabled="@(!CanProceedFromStep1())">
+                            @(IsFr ? "Continuer" : "Continue")
+                        </button>
+                    </div>
+                }
+                else if (currentStep == 2)
+                {
+                    <!-- Step 2: Delivery Address -->
+                    <div class="bg-ayi-soft rounded-4 p-4">
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Adresse de livraison" : "Delivery address")</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Adresse" : "Address")</label>
+                                <input class="form-control" @bind="addressLine" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Ville" : "City")</label>
+                                <input class="form-control" @bind="city" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Région" : "Region")</label>
+                                <select class="form-select" @bind="selectedZoneId">
+                                    <option value="">-- @(IsFr ? "Choisir" : "Select") --</option>
+                                    @foreach (var zone in zones)
+                                    {
+                                        <option value="@zone.Id">@(IsFr ? zone.Name : zone.NameEn)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-outline-secondary" @onclick="() => GoToStep(1)">@(IsFr ? "Retour" : "Back")</button>
+                            <button class="btn btn-success" @onclick="() => GoToStep(3)" disabled="@(!CanProceedFromStep2())">
+                                @(IsFr ? "Continuer" : "Continue")
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (currentStep == 3)
+                {
+                    <!-- Step 3: Shipping Method -->
+                    <div class="bg-ayi-soft rounded-4 p-4">
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Méthode de livraison" : "Shipping method")</h2>
+                        @{
+                            var selectedZone = zones.FirstOrDefault(z => z.Id.ToString() == selectedZoneId);
+                        }
+                        @if (selectedZone is null || selectedZone.Rates.Count == 0)
+                        {
+                            <p class="text-secondary">@(IsFr ? "Aucune méthode de livraison disponible pour cette région." : "No shipping method available for this region.")</p>
+                        }
+                        else
+                        {
+                            @foreach (var rate in selectedZone.Rates)
+                            {
+                                var fee = rate.FreeShippingThreshold.HasValue && cart.Total >= rate.FreeShippingThreshold.Value
+                                    ? 0m : rate.BaseFee;
+
+                                <div class="form-check p-3 border rounded-3 mb-2 bg-white">
+                                    <input class="form-check-input" type="radio" name="shippingRate"
+                                           checked="@(selectedRateId == rate.Id.ToString())"
+                                           @onchange="() => selectedRateId = rate.Id.ToString()" />
+                                    <label class="form-check-label d-flex justify-content-between w-100">
+                                        <span>@(IsFr ? rate.DeliveryMethod : rate.DeliveryMethodEn)</span>
+                                        <span class="fw-bold">@fee.ToString("C")</span>
+                                    </label>
+                                </div>
+                            }
+                        }
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-outline-secondary" @onclick="() => GoToStep(2)">@(IsFr ? "Retour" : "Back")</button>
+                            <button class="btn btn-success" @onclick="() => GoToStep(4)" disabled="@string.IsNullOrEmpty(selectedRateId)">
+                                @(IsFr ? "Continuer" : "Continue")
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (currentStep == 4)
+                {
+                    <!-- Step 4: Payment Method -->
+                    <div class="bg-ayi-soft rounded-4 p-4">
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Méthode de paiement" : "Payment method")</h2>
+                        @foreach (var method in Enum.GetValues<PaymentMethod>())
+                        {
+                            <div class="form-check p-3 border rounded-3 mb-2 bg-white">
+                                <input class="form-check-input" type="radio" name="paymentMethod"
+                                       checked="@(selectedPaymentMethod == method)"
+                                       @onchange="() => selectedPaymentMethod = method" />
+                                <label class="form-check-label">@PaymentMethodLabel(method)</label>
+                            </div>
+                        }
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-outline-secondary" @onclick="() => GoToStep(3)">@(IsFr ? "Retour" : "Back")</button>
+                            <button class="btn btn-success" @onclick="() => GoToStep(5)">@(IsFr ? "Continuer" : "Continue")</button>
+                        </div>
+                    </div>
+                }
+                else if (currentStep == 5)
+                {
+                    <!-- Step 5: Order Review -->
+                    <div class="bg-ayi-soft rounded-4 p-4">
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Récapitulatif de la commande" : "Order review")</h2>
+
+                        <h3 class="h6 fw-bold">@(IsFr ? "Client" : "Customer")</h3>
+                        <p class="small text-secondary">@fullName — @phone @(string.IsNullOrEmpty(email) ? "" : $"— {email}")</p>
+
+                        <h3 class="h6 fw-bold mt-3">@(IsFr ? "Livraison" : "Delivery")</h3>
+                        <p class="small text-secondary">@addressLine, @city</p>
+
+                        <h3 class="h6 fw-bold mt-3">@(IsFr ? "Articles" : "Items")</h3>
+                        @foreach (var item in cart.Items)
+                        {
+                            <div class="d-flex justify-content-between small py-1 border-bottom">
+                                <span>@(item.Quantity)x @(IsFr ? item.ProductName : item.ProductNameEn) @(item.VariantName is not null ? $"({(IsFr ? item.VariantName : item.VariantNameEn)})" : "")</span>
+                                <span>@item.LineTotal.ToString("C")</span>
+                            </div>
+                        }
+
+                        @if (errorMessage is not null)
+                        {
+                            <div class="alert alert-danger mt-3">@errorMessage</div>
+                        }
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-outline-secondary" @onclick="() => GoToStep(4)">@(IsFr ? "Retour" : "Back")</button>
+                            <button class="btn btn-success" @onclick="SubmitOrder" disabled="@isSubmitting">
+                                @(isSubmitting ? (IsFr ? "Traitement..." : "Processing...") : (IsFr ? "Confirmer la commande" : "Confirm order"))
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bg-ayi-soft rounded-4 p-4">
+                    <h2 class="h5 fw-bold mb-3">@(IsFr ? "Résumé" : "Summary")</h2>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>@(IsFr ? "Sous-total" : "Subtotal")</span>
+                        <span>@cart.Total.ToString("C")</span>
+                    </div>
+                    @if (currentShippingFee is not null)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>@(IsFr ? "Livraison" : "Shipping")</span>
+                            <span>@currentShippingFee.Value.ToString("C")</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total</span>
+                            <span>@((cart.Total + currentShippingFee.Value).ToString("C"))</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private CartDto? cart;
+    private List<ShippingZoneDto>? zones;
+    private int currentStep = 1;
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    private string fullName = "";
+    private string phone = "";
+    private string email = "";
+    private string addressLine = "";
+    private string city = "";
+    private string selectedZoneId = "";
+    private string selectedRateId = "";
+    private PaymentMethod selectedPaymentMethod = PaymentMethod.MobileMoney;
+
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    private decimal? currentShippingFee
+    {
+        get
+        {
+            if (zones is null || string.IsNullOrEmpty(selectedRateId)) return null;
+            var rate = zones.SelectMany(z => z.Rates).FirstOrDefault(r => r.Id.ToString() == selectedRateId);
+            if (rate is null) return null;
+            return rate.FreeShippingThreshold.HasValue && cart!.Total >= rate.FreeShippingThreshold.Value
+                ? 0m : rate.BaseFee;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var ownerKey = await CartSession.GetOwnerKeyAsync();
+            cart = await Sender.Send(new GetCartQuery(ownerKey));
+            zones = await Sender.Send(new GetShippingZonesQuery());
+            StateHasChanged();
+        }
+    }
+
+    private void GoToStep(int step) => currentStep = step;
+
+    private bool CanProceedFromStep1() =>
+        !string.IsNullOrWhiteSpace(fullName) && !string.IsNullOrWhiteSpace(phone);
+
+    private bool CanProceedFromStep2() =>
+        !string.IsNullOrWhiteSpace(addressLine) && !string.IsNullOrWhiteSpace(city) && !string.IsNullOrEmpty(selectedZoneId);
+
+    private string StepLabel(int step) => step switch
+    {
+        1 => IsFr ? "Informations" : "Information",
+        2 => IsFr ? "Adresse" : "Address",
+        3 => IsFr ? "Livraison" : "Shipping",
+        4 => IsFr ? "Paiement" : "Payment",
+        5 => IsFr ? "Révision" : "Review",
+        _ => ""
+    };
+
+    private string PaymentMethodLabel(PaymentMethod method) => method switch
+    {
+        PaymentMethod.MobileMoney => "Mobile Money",
+        PaymentMethod.OrangeMoney => "Orange Money",
+        PaymentMethod.CreditCard => IsFr ? "Carte bancaire" : "Credit Card",
+        PaymentMethod.WhatsAppManual => IsFr ? "Commande manuelle WhatsApp" : "WhatsApp manual order",
+        _ => method.ToString() // fallback covers PayPal or any future addition automatically
+    };
+
+    private async Task SubmitOrder()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var ownerKey = await CartSession.GetOwnerKeyAsync();
+
+            var result = await Sender.Send(new CreateOrderCommand(
+                ownerKey,
+                new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.Parse(selectedZoneId)),
+                Guid.Parse(selectedRateId),
+                selectedPaymentMethod,
+                null));
+                
+            await CartNotifier.NotifyCartChangedAsync();
+            Nav.NavigateTo($"/commande/confirmation/{result.OrderNumber}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = IsFr
+                ? "Une erreur est survenue. Veuillez réessayer."
+                : "Something went wrong. Please try again.";
+            isSubmitting = false;
+        }
+    }
+}

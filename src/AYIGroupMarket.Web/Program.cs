@@ -61,6 +61,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await AYIGroupMarket.Infrastructure.Identity.RoleSeeder.SeedAsync(scope.ServiceProvider);
     await AYIGroupMarket.Infrastructure.Persistence.CatalogSeeder.SeedAsync(db);
+    await AYIGroupMarket.Infrastructure.Persistence.ShippingSeeder.SeedAsync(db);
 }
 
 // Configure the HTTP request pipeline.
