@@ -1,0 +1,105 @@
+@page "/wholesale-accounts"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Wholesale.ReviewWholesaleAccount
+@using AYIGroupMarket.Domain.Enums
+@using System.Security.Claims
+@using AYIGroupMarket.Application.Features.Wholesale.GetWholesaleAccounts
+@using Microsoft.EntityFrameworkCore
+@using AYIGroupMarket.Infrastructure.Persistence
+
+<PageTitle>Admin — Wholesale Accounts</PageTitle>
+
+<div class="container py-4">
+    <h1>Wholesale Accounts</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th>City</th><th>Volume</th><th>Status</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (accounts is not null)
+            {
+                @foreach (var a in accounts)
+                {
+                    <tr>
+                        <td>@a.CompanyName</td>
+                        <td>@a.ContactPerson</td>
+                        <td>@a.Phone</td>
+                        <td>@a.Email</td>
+                        <td>@a.City</td>
+                        <td>@a.ExpectedOrderVolume</td>
+                        <td><span class="badge @StatusBadgeClass(a.Status)">@a.Status</span></td>
+                        <td>
+                            @if (a.Status == WholesaleStatus.Pending)
+                            {
+                                <button class="btn btn-sm btn-success" @onclick="() => Approve(a.Id)">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Reject(a.Id)">Reject</button>
+                            }
+                            else if (a.Status == WholesaleStatus.Approved)
+                            {
+                                <button class="btn btn-sm btn-outline-warning" @onclick="() => Suspend(a.Id)">Suspend</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<AYIGroupMarket.Domain.Entities.WholesaleAccount>? accounts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        accounts = await Sender.Send(new GetWholesaleAccountsQuery());
+    }
+
+    private async Task<string> GetCurrentAdminUserId()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+    }
+
+    private async Task Approve(Guid id)
+    {
+        var adminId = await GetCurrentAdminUserId();
+        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Approved, adminId, null));
+        await Load();
+    }
+
+    private async Task Reject(Guid id)
+    {
+        var adminId = await GetCurrentAdminUserId();
+        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Rejected, adminId, "Does not meet requirements"));
+        await Load();
+    }
+
+    private async Task Suspend(Guid id)
+    {
+        var adminId = await GetCurrentAdminUserId();
+        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Suspended, adminId, null));
+        await Load();
+    }
+
+    private string StatusBadgeClass(WholesaleStatus status) => status switch
+    {
+        WholesaleStatus.Approved => "bg-success",
+        WholesaleStatus.Rejected => "bg-danger",
+        WholesaleStatus.Suspended => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}

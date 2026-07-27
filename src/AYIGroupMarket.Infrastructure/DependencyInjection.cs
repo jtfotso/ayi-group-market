@@ -20,7 +20,7 @@ public static class DependencyInjection
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
-                options.SignIn.RequireConfirmedEmail = true;
+                options.SignIn.RequireConfirmedEmail = false; // TODO Phase 9: implement real email confirmation flow, then re-enable
                 options.Password.RequiredLength = 8;
             })
             .AddEntityFrameworkStores<AppDbContext>()
@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<Payments.PayPalPaymentGateway>();
         services.AddScoped<Payments.WhatsAppManualPaymentGateway>();
         services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
+        services.AddScoped<IWholesaleRoleAssigner, Identity.WholesaleRoleAssigner>();
 
         return services;
     }

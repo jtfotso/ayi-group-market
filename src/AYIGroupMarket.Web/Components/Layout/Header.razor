@@ -29,9 +29,16 @@
                 <button class="icon-btn" aria-label="@Localizer["AriaSearch"]">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="icon-btn" aria-label="@Localizer["AriaAccount"]">
-                    <i class="bi bi-person"></i>
-                </button>
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="/account/logout">
+                            <button type="submit" class="icon-btn" aria-label="Logout"><i class="bi bi-box-arrow-right"></i></button>
+                        </form>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/account/login" class="icon-btn" aria-label="Login"><i class="bi bi-person"></i></a>
+                    </NotAuthorized>
+                </AuthorizeView>
                 <a href="/panier" class="icon-btn position-relative" aria-label="@Localizer["AriaCart"]">
                     <i class="bi bi-cart3"></i>
                     @if (itemCount > 0)

@@ -54,3 +54,9 @@ public record ProductDetailDto(
     Guid CategoryId,
     string CategoryName,
     string CategoryNameEn);
+
+public record ProductPricingDto(
+    Guid ProductId,
+    decimal RetailPrice,
+    decimal? WholesalePrice,      // null unless the caller is verified wholesale
+    int? MinimumWholesaleQuantity); // null unless the caller is verified wholesale

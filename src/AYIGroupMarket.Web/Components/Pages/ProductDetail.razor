@@ -1,11 +1,13 @@
 @page "/boutique/{Slug}"
 @inject ISender Sender
-@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
-@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
-@using AYIGroupMarket.Application.Features.Cart.AddToCart
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@inject AuthenticationStateProvider AuthStateProvider
 @using AYIGroupMarket.Application.Features.Products.GetProductBySlug
 @using AYIGroupMarket.Application.Features.Products.GetProducts
+@using AYIGroupMarket.Application.Features.Products.GetProductPricing
+@using AYIGroupMarket.Application.Features.Cart.AddToCart
 @using System.Globalization
 
 <PageTitle>@(product?.Name ?? "Produit") — AYI GROUP MARKET</PageTitle>
@@ -73,27 +75,44 @@ else
                         <p class="text-secondary mb-4 fst-italic">@(IsFr ? "Prix à venir" : "Price coming soon")</p>
                     }
                 }
+                else if (isWholesaleAuthorized && pricing?.WholesalePrice is not null)
+                {
+                    <div class="mb-2">
+                        <span class="badge bg-success">@(IsFr ? "Prix grossiste" : "Wholesale price")</span>
+                    </div>
+                    <p class="fs-3 fw-bold text-success mb-1">@pricing.WholesalePrice.Value.ToString("C")</p>
+                    @if (pricing.MinimumWholesaleQuantity is not null)
+                    {
+                        <p class="small text-secondary mb-4">
+                            @(IsFr ? "Quantité minimum" : "Minimum quantity"): @pricing.MinimumWholesaleQuantity
+                        </p>
+                    }
+                }
                 else
                 {
                     <p class="fs-3 fw-bold text-success mb-4">@product.RetailPrice.ToString("C")</p>
                 }
 
-                <div class="d-flex gap-3 flex-wrap">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <label class="mb-0">@(IsFr ? "Quantité" : "Quantity")</label>
-                        <input type="number" class="form-control" style="width: 80px;" min="1" @bind="quantity" />
-                    </div>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-success btn-lg" @onclick="HandleAddToCart" disabled="@isAdding">
-                            @(isAdding ? (IsFr ? "Ajout..." : "Adding...") : Localizer["CtaBuyNow"])
-                        </button>
-                        <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
-                    </div>
-                    @if (addedMessage is not null)
-                    {
-                        <p class="text-success fw-bold mt-2">@addedMessage</p>
-                    }
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <label class="mb-0">@(IsFr ? "Quantité" : "Quantity")</label>
+                    <input type="number" class="form-control" style="width: 80px;" min="1" @bind="quantity" />
                 </div>
+
+                <div class="d-flex gap-3 flex-wrap">
+                    <button class="btn btn-success btn-lg" @onclick="HandleAddToCart" disabled="@isAdding">
+                        @(isAdding ? (IsFr ? "Ajout..." : "Adding...") : Localizer["CtaBuyNow"])
+                    </button>
+                    <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                </div>
+
+                @if (addedMessage is not null)
+                {
+                    <p class="text-success fw-bold mt-2">@addedMessage</p>
+                }
+                @if (errorMessage is not null)
+                {
+                    <div class="alert alert-warning mt-2">@errorMessage</div>
+                }
             </div>
         </div>
     </div>
@@ -115,22 +134,19 @@ else
 }
 
 @code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private AYIGroupMarket.Application.DTOs.ProductDetailDto? product;
+    private AYIGroupMarket.Application.DTOs.ProductPricingDto? pricing;
+    private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? similarProducts;
+    private int selectedImageIndex = 0;
+    private Guid? selectedVariantId;
+    private bool isWholesaleAuthorized = false;
+
     private int quantity = 1;
     private bool isAdding = false;
     private string? addedMessage;
-    
-    [Parameter] public string Slug { get; set; } = "";
-
-    private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
-    {
-        var selectedVariant = product!.Variants.FirstOrDefault(v => v.Id == selectedVariantId) ?? product.Variants.First();
-        return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
-    }
-
-    private AYIGroupMarket.Application.DTOs.ProductDetailDto? product;
-    private AYIGroupMarket.Application.Features.Products.GetProducts.PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? similarProducts;
-    private int selectedImageIndex = 0;
-    private Guid? selectedVariantId;
+    private string? errorMessage;
 
     private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
     private string DisplayName => IsFr ? product!.Name : product!.NameEn;
@@ -142,10 +158,28 @@ else
 
         if (product is not null)
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            isWholesaleAuthorized = authState.User.IsInRole("Wholesale");
+
+            pricing = await Sender.Send(new GetProductPricingQuery(product.Id, isWholesaleAuthorized));
+
             selectedVariantId = product.Variants.FirstOrDefault()?.Id;
             selectedImageIndex = 0;
+            addedMessage = null;
+            errorMessage = null;
             similarProducts = await Sender.Send(new GetProductsQuery(CategoryId: product.CategoryId, PageSize: 8));
         }
+    }
+
+    private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
+    {
+        if (product is null || !product.Variants.Any()) return null;
+
+        var selectedVariant = product.Variants.FirstOrDefault(v => v.Id == selectedVariantId) ?? product.Variants.First();
+        var priceType = isWholesaleAuthorized ? "Wholesale" : "Retail";
+
+        return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == priceType)
+            ?? selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
     }
 
     private async Task HandleAddToCart()
@@ -154,14 +188,19 @@ else
 
         isAdding = true;
         addedMessage = null;
+        errorMessage = null;
         StateHasChanged();
 
         try
         {
             var ownerKey = await CartSession.GetOwnerKeyAsync();
-            await Sender.Send(new AddToCartCommand(ownerKey, product!.Id, selectedVariantId, quantity));
+            await Sender.Send(new AddToCartCommand(ownerKey, product!.Id, selectedVariantId, quantity, isWholesaleAuthorized));
             addedMessage = IsFr ? "Ajouté au panier !" : "Added to cart!";
             await CartNotifier.NotifyCartChangedAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
         }
         finally
         {

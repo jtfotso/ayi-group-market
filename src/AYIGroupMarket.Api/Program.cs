@@ -25,7 +25,11 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("WholesaleCustomer", policy => policy.RequireRole("Wholesale"));
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

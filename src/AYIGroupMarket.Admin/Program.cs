@@ -1,6 +1,7 @@
 using AYIGroupMarket.Application;
 using AYIGroupMarket.Infrastructure;
 using AYIGroupMarket.Admin.Components;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,11 +11,14 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("WholesaleCustomer", policy => policy.RequireRole("Wholesale"));
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
 });
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
@@ -36,5 +40,63 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapPost("/account/register-submit", async (
+    HttpContext httpContext,
+    UserManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> userManager,
+    SignInManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> signInManager) =>
+{
+    var form = await httpContext.Request.ReadFormAsync();
+    var firstName = form["firstName"].ToString();
+    var lastName = form["lastName"].ToString();
+    var email = form["email"].ToString();
+    var password = form["password"].ToString();
+    var returnUrl = form["returnUrl"].ToString();
+
+    var user = new AYIGroupMarket.Infrastructure.Identity.ApplicationUser
+    {
+        UserName = email,
+        Email = email,
+        FirstName = firstName,
+        LastName = lastName
+    };
+
+    var result = await userManager.CreateAsync(user, password);
+
+    if (result.Succeeded)
+    {
+        await userManager.AddToRoleAsync(user, "Customer");
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return Results.LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+    }
+
+    var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+    return Results.LocalRedirect($"/account/register?error={Uri.EscapeDataString(errors)}");
+}).DisableAntiforgery();
+
+app.MapPost("/account/login-submit", async (
+    HttpContext httpContext,
+    SignInManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> signInManager) =>
+{
+    var form = await httpContext.Request.ReadFormAsync();
+    var email = form["email"].ToString();
+    var password = form["password"].ToString();
+    var returnUrl = form["returnUrl"].ToString();
+
+    var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: true, lockoutOnFailure: false);
+
+    if (result.Succeeded)
+        return Results.LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+
+    var error = Uri.EscapeDataString("Incorrect email or password.");
+    return Results.LocalRedirect($"/account/login?error={error}");
+}).DisableAntiforgery();
+
+app.MapPost("/account/logout", async (
+    SignInManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.LocalRedirect("/");
+}).DisableAntiforgery();
 
 app.Run();

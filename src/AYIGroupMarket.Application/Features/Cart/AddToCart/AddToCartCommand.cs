@@ -6,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AYIGroupMarket.Application.Features.Cart.AddToCart;
 
-public record AddToCartCommand(string OwnerKey, Guid ProductId, Guid? VariantId, int Quantity) : IRequest<Guid>;
+// IsWholesaleAuthorized is derived server-side from the real ClaimsPrincipal role —
+// never a client-supplied flag. See ProductDetail.razor for how it's resolved.
+public record AddToCartCommand(
+    string OwnerKey, Guid ProductId, Guid? VariantId, int Quantity, bool IsWholesaleAuthorized) : IRequest<Guid>;
 
 public class AddToCartCommandValidator : AbstractValidator<AddToCartCommand>
 {
@@ -29,32 +32,49 @@ public class AddToCartCommandHandler(IApplicationDbContext db) : IRequestHandler
 
         if (request.VariantId.HasValue)
         {
-            var variantPrice = await db.ProductPrices.AsNoTracking()
-                .Where(p => p.ProductVariantId == request.VariantId.Value && p.PriceType == PriceType.Retail)
-                .Select(p => p.Amount)
-                .FirstOrDefaultAsync(cancellationToken);
+            var priceType = request.IsWholesaleAuthorized ? PriceType.Wholesale : PriceType.Retail;
 
-            if (variantPrice > 0)
-                unitPrice = variantPrice;
+            var variantPrice = await db.ProductPrices.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProductVariantId == request.VariantId.Value && p.PriceType == priceType, cancellationToken);
+
+            if (variantPrice is not null)
+            {
+                // Server-side minimum quantity enforcement — matches spec section 27 exactly:
+                // "MinimumWholesaleQuantity = 5 cartons. A wholesale order with 3 cartons must be rejected."
+                if (request.IsWholesaleAuthorized && variantPrice.MinimumQuantity.HasValue
+                    && request.Quantity < variantPrice.MinimumQuantity.Value)
+                {
+                    throw new InvalidOperationException(
+                        $"Minimum wholesale quantity for this item is {variantPrice.MinimumQuantity.Value}.");
+                }
+
+                unitPrice = variantPrice.Amount;
+            }
+        }
+        else if (request.IsWholesaleAuthorized && product.WholesalePrice.HasValue)
+        {
+            if (product.MinimumWholesaleQuantity.HasValue && request.Quantity < product.MinimumWholesaleQuantity.Value)
+            {
+                throw new InvalidOperationException(
+                    $"Minimum wholesale quantity for this item is {product.MinimumWholesaleQuantity.Value}.");
+            }
+
+            unitPrice = product.WholesalePrice.Value;
         }
 
         var cart = await db.Carts
             .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.OwnerKey == request.OwnerKey, cancellationToken);
-        
-        //Console.WriteLine($"[AddToCart] OwnerKey={request.OwnerKey}, ProductId={request.ProductId}, VariantId={request.VariantId}");
-        //Console.WriteLine($"[AddToCart] Cart found: {cart is not null}, Cart.Id={cart?.Id}, Items count={cart?.Items.Count ?? 0}");
 
         if (cart is null)
         {
             cart = new Domain.Entities.Cart { OwnerKey = request.OwnerKey };
             db.Carts.Add(cart);
+            await db.SaveChangesAsync(cancellationToken); // ensure Cart.Id exists before referencing it below
         }
 
         var existingItem = cart.Items.FirstOrDefault(i =>
             i.ProductId == request.ProductId && i.ProductVariantId == request.VariantId);
-        
-        //Console.WriteLine($"[AddToCart] existingItem found: {existingItem is not null}, existingItem.Id={existingItem?.Id}");
 
         if (existingItem is not null)
         {
@@ -74,12 +94,6 @@ public class AddToCartCommandHandler(IApplicationDbContext db) : IRequestHandler
 
             db.CartItems.Add(newItem);
         }
-
-        // Diagnostic: dump every tracked entity's state before saving
-        /* foreach (var entry in db.ChangeTracker.Entries())
-        {
-            Console.WriteLine($"[AddToCart] Tracked entity: {entry.Entity.GetType().Name}, State={entry.State}, Id={entry.Property("Id").CurrentValue}");
-        } */
 
         await db.SaveChangesAsync(cancellationToken);
         return cart.Id;

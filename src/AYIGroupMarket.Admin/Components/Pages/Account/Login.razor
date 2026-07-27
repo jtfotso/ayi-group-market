@@ -1,0 +1,39 @@
+@page "/account/login"
+@using System.Globalization
+
+<PageTitle>@(IsFr ? "Connexion" : "Login") — AYI GROUP MARKET</PageTitle>
+
+<div class="container py-5" style="max-width: 480px;">
+    <h1 class="fw-bold mb-4">@(IsFr ? "Se connecter" : "Log in")</h1>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <div class="alert alert-danger">@Error</div>
+    }
+
+    <form method="post" action="/account/login-submit">
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">@(IsFr ? "Mot de passe" : "Password")</label>
+            <input type="password" class="form-control" name="password" required />
+        </div>
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+        <button class="btn btn-success w-100" type="submit">@(IsFr ? "Se connecter" : "Log in")</button>
+    </form>
+
+    <p class="mt-3 text-center small">
+        @(IsFr ? "Pas encore de compte ?" : "Don't have an account?")
+        <a href="/account/register">@(IsFr ? "Créer un compte" : "Register")</a>
+    </p>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+}

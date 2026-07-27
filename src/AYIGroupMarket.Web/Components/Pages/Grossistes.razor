@@ -1,6 +1,162 @@
 @page "/grossistes"
-<PageTitle>Grossistes — AYI GROUP MARKET</PageTitle>
+@inject ISender Sender
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Wholesale.GetMyWholesaleAccount
+@inject NavigationManager Nav
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@using AYIGroupMarket.Application.Features.Wholesale.RegisterWholesaleAccount
+@using System.Globalization
+@using System.Security.Claims
+
+<PageTitle>@(IsFr ? "Espace grossistes" : "Wholesale") — AYI GROUP MARKET</PageTitle>
+
+<section class="py-5 bg-ayi-soft border-bottom">
+    <div class="container">
+        <span class="text-ayi-eyebrow">@(IsFr ? "Espace grossistes" : "Wholesale area")</span>
+        <h1 class="fw-bold mt-2 mb-3">@(IsFr ? "Devenez partenaire AYI GROUP" : "Become an AYI GROUP partner")</h1>
+        <p class="text-secondary mb-4" style="max-width: 600px;">
+            @(IsFr
+                ? "Accédez aux tarifs par carton, aux quantités minimums avantageuses et à un catalogue PDF dédié aux professionnels."
+                : "Access carton pricing, favorable minimum quantities, and a dedicated PDF catalog for businesses.")
+        </p>
+        <div class="row g-3 mb-2">
+            <div class="col-md-3"><div class="bg-white rounded-3 p-3 h-100"><strong>@(IsFr ? "Tarifs par carton" : "Carton pricing")</strong></div></div>
+            <div class="col-md-3"><div class="bg-white rounded-3 p-3 h-100"><strong>@(IsFr ? "Commandes en gros" : "Bulk ordering")</strong></div></div>
+            <div class="col-md-3"><div class="bg-white rounded-3 p-3 h-100"><strong>@(IsFr ? "Partenariat business" : "Business partnership")</strong></div></div>
+            <div class="col-md-3"><div class="bg-white rounded-3 p-3 h-100"><strong>@(IsFr ? "Devis sur demande" : "Quotes on request")</strong></div></div>
+        </div>
+    </div>
+</section>
+
 <div class="container py-5">
-    <h1>Espace grossistes</h1>
-    <p class="text-secondary">Coming soon — Phase 6.</p>
+    <AuthorizeView>
+        <Authorized>
+            @if (existingAccount is not null)
+            {
+                <div class="alert @StatusAlertClass(existingAccount.Status)">
+                    @(IsFr ? "Statut de votre compte grossiste" : "Your wholesale account status"): <strong>@existingAccount.Status</strong>
+                    @if (existingAccount.Status == "Rejected" && !string.IsNullOrEmpty(existingAccount.RejectionReason))
+                    {
+                        <p class="mb-0 mt-2">@existingAccount.RejectionReason</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-lg-7">
+                        <h2 class="h4 fw-bold mb-3">@(IsFr ? "Créer un compte grossiste" : "Create a wholesale account")</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Nom de l'entreprise" : "Company name")</label>
+                                <input class="form-control" @bind="companyName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Personne de contact" : "Contact person")</label>
+                                <input class="form-control" @bind="contactPerson" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Téléphone" : "Phone")</label>
+                                <input class="form-control" @bind="phone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input class="form-control" @bind="email" />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">@(IsFr ? "Adresse professionnelle" : "Business address")</label>
+                                <input class="form-control" @bind="businessAddress" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">@(IsFr ? "Ville" : "City")</label>
+                                <input class="form-control" @bind="city" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Immatriculation (si applicable)" : "Business registration (if applicable)")</label>
+                                <input class="form-control" @bind="businessRegistrationInfo" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(IsFr ? "Volume de commande prévu" : "Expected order volume")</label>
+                                <input class="form-control" @bind="expectedOrderVolume" placeholder="@(IsFr ? "ex: 50 cartons/mois" : "e.g. 50 cartons/month")" />
+                            </div>
+                        </div>
+                        @if (errorMessage is not null)
+                        {
+                            <div class="alert alert-danger mt-3">@errorMessage</div>
+                        }
+                        <button class="btn btn-success mt-4" @onclick="Submit" disabled="@isSubmitting">
+                            @(isSubmitting ? (IsFr ? "Envoi..." : "Submitting...") : (IsFr ? "Soumettre la demande" : "Submit request"))
+                        </button>
+                    </div>
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p class="mb-3">@(IsFr ? "Connectez-vous ou créez un compte pour demander l'accès grossiste." : "Log in or create an account to request wholesale access.")</p>
+            <a href="/account/login?returnUrl=/grossistes" class="btn btn-success">@(IsFr ? "Se connecter" : "Log in")</a>
+        </NotAuthorized>
+    </AuthorizeView>
 </div>
+
+@code {
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    private string companyName = "", contactPerson = "", phone = "", email = "",
+        businessAddress = "", city = "", businessRegistrationInfo = "", expectedOrderVolume = "";
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    private MyWholesaleAccountDto? existingAccount;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId is not null)
+                    existingAccount = await Sender.Send(new GetMyWholesaleAccountQuery(userId));
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task Submit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? throw new InvalidOperationException("User not authenticated");
+
+            await Sender.Send(new RegisterWholesaleAccountCommand(
+                userId, companyName, contactPerson, phone, email,
+                businessAddress, city, businessRegistrationInfo, expectedOrderVolume));
+
+            Nav.NavigateTo("/grossistes", forceLoad: true);
+        }
+        catch (Exception)
+        {
+            errorMessage = IsFr ? "Une erreur est survenue." : "Something went wrong.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string StatusAlertClass(string status) => status switch
+    {
+        "Approved" => "alert-success",
+        "Rejected" => "alert-danger",
+        "Suspended" => "alert-warning",
+        _ => "alert-info"
+    };
+
+    private record ExistingAccountView(string Status, string? RejectionReason);
+}
