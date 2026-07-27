@@ -142,11 +142,14 @@
                         <h2 class="h5 fw-bold mb-3">@(IsFr ? "Méthode de paiement" : "Payment method")</h2>
                         @foreach (var method in Enum.GetValues<PaymentMethod>())
                         {
-                            <div class="form-check p-3 border rounded-3 mb-2 bg-white">
-                                <input class="form-check-input" type="radio" name="paymentMethod"
-                                       checked="@(selectedPaymentMethod == method)"
-                                       @onchange="() => selectedPaymentMethod = method" />
-                                <label class="form-check-label">@PaymentMethodLabel(method)</label>
+                            <div class="form-check p-3 border rounded-3 mb-2 bg-white d-flex align-items-center gap-3">
+                                <input class="form-check-input mt-0" type="radio" name="paymentMethod"
+                                    checked="@(selectedPaymentMethod == method)"
+                                    @onchange="() => selectedPaymentMethod = method" />
+                                <span class="payment-icon @PaymentMethodIconClass(method)">
+                                    <i class="bi @PaymentMethodIcon(method)"></i>
+                                </span>
+                                <label class="form-check-label flex-grow-1 mb-0">@PaymentMethodLabel(method)</label>
                             </div>
                         }
                         <div class="d-flex gap-2 mt-4">
@@ -284,6 +287,26 @@
         _ => method.ToString() // fallback covers PayPal or any future addition automatically
     };
 
+    private string PaymentMethodIcon(PaymentMethod method) => method switch
+    {
+        PaymentMethod.MobileMoney => "bi-phone-fill",
+        PaymentMethod.OrangeMoney => "bi-phone-fill",
+        PaymentMethod.CreditCard => "bi-credit-card-fill",
+        PaymentMethod.PayPal => "bi-paypal",
+        PaymentMethod.WhatsAppManual => "bi-whatsapp",
+        _ => "bi-wallet2"
+    };
+
+    private string PaymentMethodIconClass(PaymentMethod method) => method switch
+    {
+        PaymentMethod.MobileMoney => "payment-icon-mtn",
+        PaymentMethod.OrangeMoney => "payment-icon-orange",
+        PaymentMethod.CreditCard => "payment-icon-card",
+        PaymentMethod.PayPal => "payment-icon-paypal",
+        PaymentMethod.WhatsAppManual => "payment-icon-whatsapp",
+        _ => ""
+    };
+
     private async Task SubmitOrder()
     {
         isSubmitting = true;
@@ -294,15 +317,27 @@
         {
             var ownerKey = await CartSession.GetOwnerKeyAsync();
 
-            var result = await Sender.Send(new CreateOrderCommand(
+            var orderResult = await Sender.Send(new CreateOrderCommand(
                 ownerKey,
                 new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.Parse(selectedZoneId)),
                 Guid.Parse(selectedRateId),
                 selectedPaymentMethod,
                 null));
-                
+
+            var paymentResult = await Sender.Send(new AYIGroupMarket.Application.Features.Payments.InitiatePayment.InitiatePaymentCommand(orderResult.Id));
+
             await CartNotifier.NotifyCartChangedAsync();
-            Nav.NavigateTo($"/commande/confirmation/{result.OrderNumber}");
+
+            if (paymentResult.RedirectUrl is not null)
+            {
+                // Card/PayPal — send the customer to the gateway's hosted checkout
+                Nav.NavigateTo(paymentResult.RedirectUrl, forceLoad: true);
+            }
+            else
+            {
+                // Mobile Money/Orange Money/WhatsApp — no redirect, straight to confirmation
+                Nav.NavigateTo($"/commande/confirmation/{orderResult.OrderNumber}");
+            }
         }
         catch (Exception ex)
         {

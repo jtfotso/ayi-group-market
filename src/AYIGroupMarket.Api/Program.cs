@@ -39,6 +39,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowWebApp");
 
+app.MapPaymentWebhookEndpoints();
 app.MapCategoriesEndpoints();
 app.MapProductsEndpoints();
 

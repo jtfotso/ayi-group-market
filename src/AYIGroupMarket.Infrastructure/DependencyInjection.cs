@@ -33,6 +33,12 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOrderNumberGenerator, Services.OrderNumberGenerator>();
+        services.AddScoped<Payments.MobileMoneyPaymentGateway>();
+        services.AddScoped<Payments.OrangeMoneyPaymentGateway>();
+        services.AddScoped<Payments.CardPaymentGateway>();
+        services.AddScoped<Payments.PayPalPaymentGateway>();
+        services.AddScoped<Payments.WhatsAppManualPaymentGateway>();
+        services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
 
         return services;
     }

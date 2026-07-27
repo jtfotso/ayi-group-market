@@ -346,3 +346,21 @@ h1:focus {
   box-shadow: 0 0 0 3px rgba(248, 249, 250, 0.35);
   border-radius: 4px;
 }
+
+.payment-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.payment-icon-mtn { background-color: #ffcc00; color: #12251c; }
+.payment-icon-orange { background-color: #ff7900; }
+.payment-icon-card { background-color: #1f2937; }
+.payment-icon-paypal { background-color: #003087; }
+.payment-icon-whatsapp { background-color: #25d366; }

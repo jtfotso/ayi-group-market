@@ -18,5 +18,7 @@ public interface IApplicationDbContext
     DbSet<Address> Addresses { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
+    DbSet<Payment> Payments { get; }
+    DbSet<PaymentTransaction> PaymentTransactions { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
