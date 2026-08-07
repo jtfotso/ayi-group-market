@@ -39,6 +39,10 @@
                     {
                         <p class="mb-0 mt-2">@existingAccount.RejectionReason</p>
                     }
+                    @if (existingAccount.Status == "Approved")
+                    {
+                        <a href="/grossistes/devis" class="btn btn-success mt-3">@(IsFr ? "Demander un devis" : "Request a quote")</a>
+                    }
                 </div>
             }
             else

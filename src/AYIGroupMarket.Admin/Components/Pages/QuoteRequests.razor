@@ -1,0 +1,103 @@
+@page "/quote-requests"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Wholesale.GetQuoteRequests
+@using AYIGroupMarket.Application.Features.Wholesale.RespondToQuoteRequest
+@using AYIGroupMarket.Application.DTOs
+
+<PageTitle>Admin — Quote Requests</PageTitle>
+
+<div class="container py-4">
+    <h1>Quote Requests</h1>
+
+    @if (quotes is not null)
+    {
+        @foreach (var q in quotes)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>@q.CompanyName — <span class="badge bg-secondary">@q.Status</span></h5>
+                    <p class="small text-secondary">@q.DeliveryLocation — @q.CreatedAt.ToString("dd/MM/yyyy")</p>
+                    @if (!string.IsNullOrEmpty(q.Message))
+                    {
+                        <p class="small fst-italic">"@q.Message"</p>
+                    }
+
+                    <table class="table table-sm">
+                        <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in q.Items)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>
+                                        @if (q.Status == "Submitted" || q.Status == "UnderReview")
+                                        {
+                                            <input type="number" step="0.01" class="form-control form-control-sm" style="width:100px;"
+                                                   @onchange="@(e => SetPrice(q.Id, item.ProductId, e.Value))" />
+                                        }
+                                        else
+                                        {
+                                            @(item.QuotedUnitPrice?.ToString("C") ?? "-")
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (q.Status == "Submitted" || q.Status == "UnderReview")
+                    {
+                        <button class="btn btn-sm btn-success" @onclick="() => Respond(q.Id)">Send Quote</button>
+                    }
+                    else if (q.QuotedTotal is not null)
+                    {
+                        <p class="fw-bold">Total: @q.QuotedTotal.Value.ToString("C")</p>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<QuoteRequestDto>? quotes;
+    private Dictionary<(Guid quoteId, Guid productId), decimal> priceInputs = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        quotes = await Sender.Send(new GetQuoteRequestsQuery());
+    }
+
+    private void SetPrice(Guid quoteId, Guid productId, object? value)
+    {
+        if (value is string s && decimal.TryParse(s, out var price))
+            priceInputs[(quoteId, productId)] = price;
+    }
+
+    private async Task Respond(Guid quoteId)
+    {
+        var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
+        if (quote is null) return;
+
+        var itemPrices = quote.Items
+            .Where(i => priceInputs.ContainsKey((quoteId, i.ProductId)))
+            .Select(i => new QuoteItemPriceInput(i.Id, priceInputs[(quoteId, i.ProductId)]))
+            .ToList();
+
+        if (itemPrices.Count == 0) return;
+
+        await Sender.Send(new RespondToQuoteRequestCommand(quoteId, itemPrices));
+        await Load();
+    }
+}
