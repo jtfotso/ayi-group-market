@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
         services.AddScoped<IWholesaleRoleAssigner, Identity.WholesaleRoleAssigner>();
         services.AddScoped<IWholesaleCatalogGenerator, Pdf.WholesaleCatalogGenerator>();
+        services.AddScoped<INotificationService, Services.NotificationService>();
 
         return services;
     }

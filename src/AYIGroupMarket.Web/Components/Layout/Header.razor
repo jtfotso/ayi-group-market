@@ -1,6 +1,10 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
 @inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
 @inject ISender Sender
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Notifications.GetMyNotifications
+@using AYIGroupMarket.Application.Features.Notifications.MarkNotificationRead
+@using System.Security.Claims
 @using AYIGroupMarket.Application.Features.Cart.GetCart
 @inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
 @implements IDisposable
@@ -31,6 +35,32 @@
                 </button>
                 <AuthorizeView>
                     <Authorized>
+                        <div class="dropdown">
+                            <button class="icon-btn position-relative" data-bs-toggle="dropdown" aria-label="Notifications">
+                                <i class="bi bi-bell"></i>
+                                @if (unreadCount > 0)
+                                {
+                                    <span class="cart-badge">@unreadCount</span>
+                                }
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-2" style="width: 320px; max-height: 400px; overflow-y:auto;">
+                                @if (notifications is null || !notifications.Any())
+                                {
+                                    <p class="text-secondary small px-2 mb-0">No notifications</p>
+                                }
+                                else
+                                {
+                                    @foreach (var n in notifications)
+                                    {
+                                        <a href="@(n.LinkUrl ?? "#")" class="dropdown-item @(n.IsRead ? "" : "fw-bold")"
+                                        @onclick="() => MarkRead(n.Id)">
+                                            <div class="small">@n.Title</div>
+                                            <div class="text-secondary" style="font-size:.75rem;">@n.Message</div>
+                                        </a>
+                                    }
+                                }
+                            </div>
+                        </div>
                         <a href="/mon-compte" class="icon-btn" aria-label="Account"><i class="bi bi-person-fill"></i></a>
                         <form method="post" action="/account/logout">
                             <button type="submit" class="icon-btn" aria-label="Logout"><i class="bi bi-box-arrow-right"></i></button>
@@ -71,6 +101,29 @@
 
 @code {
     private int itemCount = 0;
+    private List<AYIGroupMarket.Application.Features.Notifications.GetMyNotifications.NotificationDto>? notifications;
+    private int unreadCount => notifications?.Count(n => !n.IsRead) ?? 0;
+
+    // Call this from OnAfterRenderAsync(firstRender), alongside the existing cart count refresh:
+    private async Task LoadNotifications()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true) return;
+
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId is not null)
+            notifications = await Sender.Send(new GetMyNotificationsQuery(userId));
+    }
+
+    private async Task MarkRead(Guid notificationId)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId is null) return;
+
+        await Sender.Send(new MarkNotificationReadCommand(notificationId, userId));
+        await LoadNotifications();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -78,6 +131,7 @@
         {
             CartNotifier.OnCartChanged += HandleCartChanged;
             await RefreshCartCount();
+            await LoadNotifications();
             StateHasChanged();
         }
     }
@@ -85,6 +139,7 @@
     private async Task HandleCartChanged()
     {
         await RefreshCartCount();
+        await LoadNotifications();
         await InvokeAsync(StateHasChanged);
     }
 

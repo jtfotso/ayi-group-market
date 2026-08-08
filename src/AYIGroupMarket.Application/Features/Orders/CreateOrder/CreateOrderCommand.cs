@@ -29,7 +29,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     }
 }
 
-public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGenerator orderNumberGenerator)
+public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGenerator orderNumberGenerator, INotificationService notificationService)
     : IRequestHandler<CreateOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -106,6 +106,16 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
             db.CartItems.Remove(item);
 
         await db.SaveChangesAsync(cancellationToken);
+
+        if (request.OwnerKey.StartsWith("user:"))
+        {
+            var userId = request.OwnerKey["user:".Length..];
+            await notificationService.NotifyAsync(
+                userId,
+                "Commande confirmée", "Order confirmed",
+                $"Votre commande {order.OrderNumber} a été enregistrée.", $"Your order {order.OrderNumber} has been placed.",
+                "/mon-compte/commandes", cancellationToken);
+        }
 
         var itemDtos = cart.Items.Select(i => new OrderItemDto(
             i.Product.Name, i.Product.NameEn,

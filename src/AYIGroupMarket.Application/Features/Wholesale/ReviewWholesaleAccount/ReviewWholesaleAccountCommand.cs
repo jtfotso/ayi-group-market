@@ -21,7 +21,7 @@ public class ReviewWholesaleAccountCommandValidator : AbstractValidator<ReviewWh
     }
 }
 
-public class ReviewWholesaleAccountCommandHandler(IApplicationDbContext db, IWholesaleRoleAssigner roleAssigner)
+public class ReviewWholesaleAccountCommandHandler(IApplicationDbContext db, IWholesaleRoleAssigner roleAssigner, INotificationService notificationService)
     : IRequestHandler<ReviewWholesaleAccountCommand>
 {
     public async Task Handle(ReviewWholesaleAccountCommand request, CancellationToken cancellationToken)
@@ -42,5 +42,21 @@ public class ReviewWholesaleAccountCommandHandler(IApplicationDbContext db, IWho
             await roleAssigner.AddToWholesaleRoleAsync(account.UserId, cancellationToken);
         else
             await roleAssigner.RemoveFromWholesaleRoleAsync(account.UserId, cancellationToken);
+        
+        var statusText = request.NewStatus switch
+        {
+            WholesaleStatus.Approved => ("Compte grossiste approuvé", "Wholesale account approved"),
+            WholesaleStatus.Rejected => ("Compte grossiste rejeté", "Wholesale account rejected"),
+            WholesaleStatus.Suspended => ("Compte grossiste suspendu", "Wholesale account suspended"),
+            _ => ("Statut du compte mis à jour", "Account status updated")
+        };
+
+        await notificationService.NotifyAsync(
+            account.UserId, statusText.Item1, statusText.Item2,
+            request.NewStatus == WholesaleStatus.Rejected && request.RejectionReason is not null
+                ? request.RejectionReason : "",
+            request.NewStatus == WholesaleStatus.Rejected && request.RejectionReason is not null
+                ? request.RejectionReason : "",
+            "/grossistes", cancellationToken);
     }
 }

@@ -21,7 +21,7 @@ public class RespondToQuoteRequestCommandValidator : AbstractValidator<RespondTo
     }
 }
 
-public class RespondToQuoteRequestCommandHandler(IApplicationDbContext db)
+public class RespondToQuoteRequestCommandHandler(IApplicationDbContext db, INotificationService notificationService)
     : IRequestHandler<RespondToQuoteRequestCommand>
 {
     public async Task Handle(RespondToQuoteRequestCommand request, CancellationToken cancellationToken)
@@ -47,5 +47,11 @@ public class RespondToQuoteRequestCommandHandler(IApplicationDbContext db)
         quote.ExpiresAt = DateTime.UtcNow.AddDays(14);
 
         await db.SaveChangesAsync(cancellationToken);
+
+        await notificationService.NotifyAsync(
+            quote.UserId,
+            "Votre devis est prêt", "Your quote is ready",
+            $"Total: {total:C}", $"Total: {total:C}",
+            "/grossistes/devis", cancellationToken);
     }
 }

@@ -25,5 +25,7 @@ public interface IApplicationDbContext
     DbSet<Favorite> Favorites { get; }
     DbSet<QuoteRequest> QuoteRequests { get; }
     DbSet<QuoteRequestItem> QuoteRequestItems { get; }
+    DbSet<Notification> Notifications { get; }
+    
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
