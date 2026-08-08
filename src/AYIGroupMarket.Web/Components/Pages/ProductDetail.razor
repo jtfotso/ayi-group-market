@@ -4,6 +4,12 @@
 @inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
 @inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
 @inject AuthenticationStateProvider AuthStateProvider
+@inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
+@using AYIGroupMarket.Application.Features.Reviews.GetProductReviews
+@using AYIGroupMarket.Application.Features.Reviews.SubmitReview
+@using AYIGroupMarket.Application.Features.Favorites.ToggleFavorite
+@using AYIGroupMarket.Application.Features.Favorites.IsFavorite
+@using System.Security.Claims
 @using AYIGroupMarket.Application.Features.Products.GetProductBySlug
 @using AYIGroupMarket.Application.Features.Products.GetProducts
 @using AYIGroupMarket.Application.Features.Products.GetProductPricing
@@ -50,6 +56,20 @@ else
             <div class="col-lg-6">
                 <span class="text-ayi-eyebrow">@(IsFr ? product.CategoryName : product.CategoryNameEn)</span>
                 <h1 class="fw-bold mt-2 mb-3">@DisplayName</h1>
+                <AuthorizeView>
+                    <Authorized>
+                        <button class="btn btn-link p-0 text-decoration-none mb-2" @onclick="ToggleFavorite">
+                            <i class="bi @(isFavorited ? "bi-heart-fill text-danger" : "bi-heart")"></i>
+                            @(isFavorited ? (IsFr ? "Retiré des favoris" : "Remove from favorites") : (IsFr ? "Ajouter aux favoris" : "Add to favorites"))
+                        </button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/account/login" class="btn btn-link p-0 text-decoration-none mb-2">
+                            <i class="bi bi-heart"></i>
+                            @(IsFr ? "Connectez-vous pour ajouter aux favoris" : "Log in to add to favorites")
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
                 <p class="text-secondary mb-4">@DisplayDescription</p>
 
                 @if (product.Variants.Any())
@@ -131,6 +151,85 @@ else
             </div>
         </section>
     }
+    @if (product is not null)
+    {
+        <section class="py-5">
+            <div class="container" style="max-width: 800px;">
+                <h2 class="h4 fw-bold mb-3">@(IsFr ? "Avis clients" : "Customer reviews")</h2>
+
+                @if (reviewSummary is not null)
+                {
+                    @if (reviewSummary.TotalReviews > 0)
+                    {
+                        <p class="mb-4">
+                            <strong>@reviewSummary.AverageRating.ToString("0.0")</strong> / 5
+                            (@reviewSummary.TotalReviews @(IsFr ? "avis" : "reviews"))
+                        </p>
+
+                        @foreach (var review in reviewSummary.Reviews)
+                        {
+                            <div class="border-bottom py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>@review.UserDisplayName</strong>
+                                        @if (review.IsVerifiedPurchase)
+                                        {
+                                            <span class="badge bg-success ms-2">@(IsFr ? "Achat vérifié" : "Verified purchase")</span>
+                                        }
+                                    </div>
+                                    <span class="text-warning">@(new string('★', review.Rating))@(new string('☆', 5 - review.Rating))</span>
+                                </div>
+                                <p class="fw-bold mb-1 mt-2">@review.Title</p>
+                                <p class="text-secondary mb-0">@review.Comment</p>
+                                <small class="text-muted">@review.CreatedAt.ToString("dd/MM/yyyy")</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-secondary mb-4">@(IsFr ? "Aucun avis pour le moment." : "No reviews yet.")</p>
+                    }
+                }
+
+                <AuthorizeView>
+                    <Authorized>
+                        <h3 class="h6 fw-bold mt-4 mb-3">@(IsFr ? "Laisser un avis" : "Leave a review")</h3>
+
+                        <div class="mb-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var star = i;
+                                <button type="button" class="btn btn-link p-0 me-1" @onclick="() => reviewRating = star">
+                                    <i class="bi @(star <= reviewRating ? "bi-star-fill text-warning" : "bi-star")"></i>
+                                </button>
+                            }
+                        </div>
+                        <input class="form-control mb-2" placeholder="@(IsFr ? "Titre" : "Title")" @bind="reviewTitle" />
+                        <textarea class="form-control mb-2" rows="3" placeholder="@(IsFr ? "Votre commentaire" : "Your comment")" @bind="reviewComment"></textarea>
+
+                        @if (reviewErrorMessage is not null)
+                        {
+                            <div class="alert alert-warning">@reviewErrorMessage</div>
+                        }
+                        @if (reviewSuccessMessage is not null)
+                        {
+                            <div class="alert alert-success">@reviewSuccessMessage</div>
+                        }
+
+                        <button class="btn btn-success" @onclick="SubmitReview" disabled="@isSubmittingReview">
+                            @(isSubmittingReview ? (IsFr ? "Envoi..." : "Submitting...") : (IsFr ? "Envoyer l'avis" : "Submit review"))
+                        </button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <p class="text-secondary">
+                            <a href="/account/login">@(IsFr ? "Connectez-vous" : "Log in")</a>
+                            @(IsFr ? "pour laisser un avis." : "to leave a review.")
+                        </p>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </section>
+    }
 }
 
 @code {
@@ -141,6 +240,15 @@ else
     private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? similarProducts;
     private int selectedImageIndex = 0;
     private Guid? selectedVariantId;
+    private ReviewSummaryDto? reviewSummary;
+    private bool isFavorited = false;
+
+    private int reviewRating = 5;
+    private string reviewTitle = "";
+    private string reviewComment = "";
+    private bool isSubmittingReview = false;
+    private string? reviewErrorMessage;
+    private string? reviewSuccessMessage;
     private bool isWholesaleAuthorized = false;
 
     private int quantity = 1;
@@ -162,6 +270,14 @@ else
             isWholesaleAuthorized = authState.User.IsInRole("Wholesale");
 
             pricing = await Sender.Send(new GetProductPricingQuery(product.Id, isWholesaleAuthorized));
+            reviewSummary = await Sender.Send(new GetProductReviewsQuery(product.Id));
+
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId is not null)
+                    isFavorited = await Sender.Send(new IsFavoriteQuery(userId, product.Id));
+            }
 
             selectedVariantId = product.Variants.FirstOrDefault()?.Id;
             selectedImageIndex = 0;
@@ -171,16 +287,59 @@ else
         }
     }
 
-    private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
+    private async Task ToggleFavorite()
     {
-        if (product is null || !product.Variants.Any()) return null;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!; // safe: button only renders when authenticated
 
-        var selectedVariant = product.Variants.FirstOrDefault(v => v.Id == selectedVariantId) ?? product.Variants.First();
-        var priceType = isWholesaleAuthorized ? "Wholesale" : "Retail";
-
-        return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == priceType)
-            ?? selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
+        isFavorited = await Sender.Send(new ToggleFavoriteCommand(userId, product!.Id));
     }
+
+    private async Task SubmitReview()
+    {
+        isSubmittingReview = true;
+        reviewErrorMessage = null;
+        reviewSuccessMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? throw new InvalidOperationException("Not authenticated");
+            var displayName = authState.User.Identity?.Name ?? "Client AYI GROUP";
+
+            await Sender.Send(new SubmitReviewCommand(product!.Id, userId, displayName, reviewRating, reviewTitle, reviewComment));
+
+            reviewSuccessMessage = IsFr
+                ? "Merci ! Votre avis sera visible après modération."
+                : "Thank you! Your review will be visible after moderation.";
+            reviewTitle = "";
+            reviewComment = "";
+            reviewRating = 5;
+        }
+        catch (InvalidOperationException ex)
+        {
+            reviewErrorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            reviewErrorMessage = IsFr ? "Une erreur est survenue." : "Something went wrong.";
+        }
+        finally
+        {
+            isSubmittingReview = false;
+        }
+    }
+        private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
+        {
+            if (product is null || !product.Variants.Any()) return null;
+
+            var selectedVariant = product.Variants.FirstOrDefault(v => v.Id == selectedVariantId) ?? product.Variants.First();
+            var priceType = isWholesaleAuthorized ? "Wholesale" : "Retail";
+
+            return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == priceType)
+                ?? selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
+        }
 
     private async Task HandleAddToCart()
     {

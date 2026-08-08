@@ -29,6 +29,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<WholesaleAccount> WholesaleAccounts => Set<WholesaleAccount>();
     public DbSet<QuoteRequestItem> QuoteRequestItems => Set<QuoteRequestItem>();
     public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
+    public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // required — configures Identity's own tables

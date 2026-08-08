@@ -1,0 +1,55 @@
+@page "/mon-compte/favoris"
+@layout AYIGroupMarket.Web.Components.Layout.AccountLayout
+@attribute [Authorize]
+@inject ISender Sender
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Favorites.GetMyFavorites
+@using System.Globalization
+@using System.Security.Claims
+
+<h2 class="h4 fw-bold mb-3">@(IsFr ? "Mes favoris" : "My favorites")</h2>
+
+@if (favorites is null)
+{
+    <p class="text-secondary">@(IsFr ? "Chargement..." : "Loading...")</p>
+}
+else if (!favorites.Any())
+{
+    <p class="text-secondary">@(IsFr ? "Aucun favori pour le moment." : "No favorites yet.")</p>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var fav in favorites)
+        {
+            <div class="col-md-4">
+                <a href="/boutique/@fav.Slug" class="text-decoration-none text-dark">
+                    <div class="card h-100 border-0 bg-ayi-soft rounded-4">
+                        <div class="card-body">
+                            <h3 class="h6 fw-bold">@(IsFr ? fav.Name : fav.NameEn)</h3>
+                            <span class="fw-bold text-success">@fav.RetailPrice.ToString("C")</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<AYIGroupMarket.Application.DTOs.FavoriteProductDto>? favorites;
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is not null)
+                favorites = await Sender.Send(new GetMyFavoritesQuery(userId));
+
+            StateHasChanged();
+        }
+    }
+}

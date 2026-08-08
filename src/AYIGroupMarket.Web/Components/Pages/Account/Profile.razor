@@ -1,0 +1,76 @@
+@page "/mon-compte/profil"
+@layout AYIGroupMarket.Web.Components.Layout.AccountLayout
+@attribute [Authorize]
+@inject UserManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Identity
+@using System.Globalization
+@using System.Security.Claims
+
+<h2 class="h4 fw-bold mb-3">@(IsFr ? "Profil" : "Profile")</h2>
+
+@if (user is not null)
+{
+    <div class="mb-3">
+        <label class="form-label">@(IsFr ? "Prénom" : "First name")</label>
+        <input class="form-control" @bind="firstName" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">@(IsFr ? "Nom" : "Last name")</label>
+        <input class="form-control" @bind="lastName" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="@user.Email" disabled />
+        <small class="text-secondary">@(IsFr ? "L'email ne peut pas être modifié ici." : "Email cannot be changed here.")</small>
+    </div>
+
+    @if (successMessage is not null)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+
+    <button class="btn btn-success" @onclick="Save" disabled="@isSaving">
+        @(isSaving ? (IsFr ? "Enregistrement..." : "Saving...") : (IsFr ? "Enregistrer" : "Save"))
+    </button>
+}
+
+@code {
+    private AYIGroupMarket.Infrastructure.Identity.ApplicationUser? user;
+    private string firstName = "", lastName = "";
+    private bool isSaving = false;
+    private string? successMessage;
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is not null)
+            {
+                user = await UserManager.FindByIdAsync(userId);
+                if (user is not null)
+                {
+                    firstName = user.FirstName;
+                    lastName = user.LastName;
+                }
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task Save()
+    {
+        if (user is null) return;
+
+        isSaving = true;
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        await UserManager.UpdateAsync(user);
+
+        successMessage = IsFr ? "Profil mis à jour." : "Profile updated.";
+        isSaving = false;
+    }
+}

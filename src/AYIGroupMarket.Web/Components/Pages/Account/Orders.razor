@@ -1,0 +1,63 @@
+@page "/mon-compte/commandes"
+@layout AYIGroupMarket.Web.Components.Layout.AccountLayout
+@attribute [Authorize]
+@inject ISender Sender
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Orders.GetMyOrders
+@using System.Globalization
+@using System.Security.Claims
+
+<h2 class="h4 fw-bold mb-3">@(IsFr ? "Mes commandes" : "My orders")</h2>
+
+@if (orders is null)
+{
+    <p class="text-secondary">@(IsFr ? "Chargement..." : "Loading...")</p>
+}
+else if (!orders.Any())
+{
+    <p class="text-secondary">@(IsFr ? "Vous n'avez pas encore de commande." : "You don't have any orders yet.")</p>
+    <a href="/boutique" class="btn btn-success">@(IsFr ? "Aller à la boutique" : "Go to shop")</a>
+}
+else
+{
+    @foreach (var order in orders)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <strong>@order.OrderNumber</strong>
+                    <span class="badge bg-secondary">@order.Status</span>
+                </div>
+                @foreach (var item in order.Items)
+                {
+                    <div class="d-flex justify-content-between small py-1">
+                        <span>@(item.Quantity)x @(IsFr ? item.ProductName : item.ProductNameEn)</span>
+                        <span>@item.LineTotal.ToString("C")</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top">
+                    <span>Total</span>
+                    <span>@order.Total.ToString("C")</span>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<AYIGroupMarket.Application.DTOs.OrderDto>? orders;
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is not null)
+                orders = await Sender.Send(new GetMyOrdersQuery($"user:{userId}"));
+
+            StateHasChanged();
+        }
+    }
+}

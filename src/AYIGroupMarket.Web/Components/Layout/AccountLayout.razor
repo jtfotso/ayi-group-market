@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+@inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
+@using System.Globalization
+
+<div class="container py-5">
+    <h1 class="fw-bold mb-4">@(IsFr ? "Mon compte" : "My account")</h1>
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="list-group">
+                <NavLink class="list-group-item list-group-item-action" href="/mon-compte/profil">
+                    @(IsFr ? "Profil" : "Profile")
+                </NavLink>
+                <NavLink class="list-group-item list-group-item-action" href="/mon-compte/commandes">
+                    @(IsFr ? "Commandes" : "Orders")
+                </NavLink>
+                <NavLink class="list-group-item list-group-item-action" href="/mon-compte/favoris">
+                    @(IsFr ? "Favoris" : "Favorites")
+                </NavLink>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+}

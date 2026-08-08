@@ -1,0 +1,57 @@
+@page "/reviews"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Reviews.GetPendingReviews
+@using AYIGroupMarket.Application.Features.Reviews.ModerateReview
+@using AYIGroupMarket.Domain.Enums
+
+<PageTitle>Admin — Reviews</PageTitle>
+
+<div class="container py-4">
+    <h1>Pending Reviews</h1>
+
+    @if (reviews is not null)
+    {
+        @if (!reviews.Any())
+        {
+            <p class="text-secondary">No pending reviews.</p>
+        }
+        @foreach (var review in reviews)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>@review.Product.Name — @review.Rating★</h5>
+                    <p class="fw-bold mb-1">@review.Title</p>
+                    <p>@review.Comment</p>
+                    <p class="small text-secondary">@review.UserDisplayName — @review.CreatedAt.ToString("dd/MM/yyyy")</p>
+                    <button class="btn btn-sm btn-success" @onclick="() => Moderate(review.Id, ReviewStatus.Approved)">Approve</button>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Moderate(review.Id, ReviewStatus.Rejected)">Reject</button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<AYIGroupMarket.Domain.Entities.ProductReview>? reviews;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        reviews = await Sender.Send(new GetPendingReviewsQuery());
+    }
+
+    private async Task Moderate(Guid reviewId, ReviewStatus status)
+    {
+        await Sender.Send(new ModerateReviewCommand(reviewId, status));
+        await Load();
+    }
+}
