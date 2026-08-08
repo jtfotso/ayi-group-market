@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -74,7 +75,9 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
@@ -92,6 +95,7 @@ app.MapGet("/culture/set", (HttpContext httpContext, string culture, string redi
 
     return Results.LocalRedirect(redirectUri);
 }).DisableAntiforgery();
+
 app.MapPost("/account/register-submit", async (
     HttpContext httpContext,
     UserManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> userManager,
@@ -125,6 +129,7 @@ app.MapPost("/account/register-submit", async (
     return Results.LocalRedirect($"/account/register?error={Uri.EscapeDataString(errors)}" +
         (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
 }).DisableAntiforgery();
+
 app.MapPost("/account/login-submit", async (
     HttpContext httpContext,
     SignInManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> signInManager) =>
@@ -143,10 +148,24 @@ app.MapPost("/account/login-submit", async (
     return Results.LocalRedirect($"/account/login?error={error}" +
         (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
 }).DisableAntiforgery();
+
 app.MapPost("/account/logout", async (
     SignInManager<AYIGroupMarket.Infrastructure.Identity.ApplicationUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
     return Results.LocalRedirect("/");
 }).DisableAntiforgery();
+
+app.MapGet("/grossistes/catalogue.pdf", async (
+    AYIGroupMarket.Application.Abstractions.IWholesaleCatalogGenerator generator,
+    HttpContext httpContext, CancellationToken cancellationToken) =>
+{
+    if (!httpContext.User.IsInRole("Wholesale"))
+        return Results.Forbid();
+
+    var isFrench = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+    var pdfBytes = await generator.GenerateAsync(isFrench, cancellationToken);
+    return Results.File(pdfBytes, "application/pdf", "AYI-Group-Market-Catalogue-Grossiste.pdf");
+}).RequireAuthorization();
+
 app.Run();

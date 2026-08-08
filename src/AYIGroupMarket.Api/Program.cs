@@ -30,6 +30,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("WholesaleCustomer", policy => policy.RequireRole("Wholesale"));
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
 });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -46,6 +47,8 @@ app.UseCors("AllowWebApp");
 app.MapPaymentWebhookEndpoints();
 app.MapCategoriesEndpoints();
 app.MapProductsEndpoints();
+//app.MapWholesaleCatalogEndpoint();
+
 
 app.Run();
 

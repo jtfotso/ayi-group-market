@@ -42,6 +42,9 @@
                     @if (existingAccount.Status == "Approved")
                     {
                         <a href="/grossistes/devis" class="btn btn-success mt-3">@(IsFr ? "Demander un devis" : "Request a quote")</a>
+                        <a href="/grossistes/catalogue.pdf" class="btn btn-outline-success mt-3 ms-2" target="_blank">
+                            @(IsFr ? "Télécharger le catalogue PDF" : "Download PDF catalog")
+                        </a>
                     }
                 </div>
             }

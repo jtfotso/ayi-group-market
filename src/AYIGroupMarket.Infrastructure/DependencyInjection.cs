@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<Payments.WhatsAppManualPaymentGateway>();
         services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
         services.AddScoped<IWholesaleRoleAssigner, Identity.WholesaleRoleAssigner>();
+        services.AddScoped<IWholesaleCatalogGenerator, Pdf.WholesaleCatalogGenerator>();
 
         return services;
     }
