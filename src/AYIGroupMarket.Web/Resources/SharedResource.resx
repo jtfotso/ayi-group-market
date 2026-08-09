@@ -16,7 +16,7 @@
   <data name="AriaCart" xml:space="preserve"><value>Panier</value></data>
 
   <!-- Hero -->
-  <data name="HeroEyebrow" xml:space="preserve"><value>Spécialiste des produits naturels au Cameroun</value></data>
+  <data name="HeroEyebrow" xml:space="preserve"><value>Des saveurs naturelles, made in Cameroon</value></data>
   <data name="HeroH1" xml:space="preserve"><value>Des produits de qualité au meilleur prix, en gros et au détail.</value></data>
   <data name="HeroLede" xml:space="preserve"><value>Découvrez notre sélection de jus 100&#160;% naturels FRUILEG, snacks, superaliments, désodorisants pour maison et voiture — livrés partout au Cameroun.</value></data>
   <data name="CtaBuyNow" xml:space="preserve"><value>🛒 Acheter maintenant</value></data>
@@ -58,7 +58,7 @@
   <data name="WsBtn" xml:space="preserve"><value>Demander un devis</value></data>
 
   <!-- Footer -->
-  <data name="FooterDesc" xml:space="preserve"><value>Spécialiste des produits naturels, parfums et accessoires au Cameroun. Des produits de qualité au meilleur prix, en gros et au détail.</value></data>
+  <data name="FooterDesc" xml:space="preserve"><value>Spécialiste des saveurs naturelles, parfums et accessoires au Cameroun. Des produits de qualité au meilleur prix, en gros et au détail.</value></data>
   <data name="FooterShop" xml:space="preserve"><value>Boutique</value></data>
   <data name="FooterCompany" xml:space="preserve"><value>Entreprise</value></data>
   <data name="FooterCity" xml:space="preserve"><value>Douala, Cameroun</value></data>
