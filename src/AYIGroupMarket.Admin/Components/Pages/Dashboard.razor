@@ -1,0 +1,38 @@
+@page "/"
+@page "/dashboard"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Admin.GetDashboardMetrics
+
+<PageTitle>Admin Dashboard</PageTitle>
+
+<div class="container py-4">
+    <h1 class="mb-4">Dashboard</h1>
+
+    @if (metrics is not null)
+    {
+        <div class="row g-3">
+            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Revenue</small><h3>@metrics.TotalRevenue.ToString("C")</h3></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Orders</small><h3>@metrics.TotalOrders</h3></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Avg. Order Value</small><h3>@metrics.AverageOrderValue.ToString("C")</h3></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Customers</small><h3>@metrics.TotalCustomers</h3></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Wholesale Customers</small><h3>@metrics.WholesaleCustomers</h3></div></div>
+            <div class="col-md-3"><div class="card p-3 @(metrics.LowStockProductCount > 0 ? "border-warning" : "")"><small class="text-secondary">Low Stock Products</small><h3>@metrics.LowStockProductCount</h3></div></div>
+            <div class="col-md-3"><div class="card p-3 @(metrics.PendingWholesaleApplications > 0 ? "border-warning" : "")"><small class="text-secondary">Pending Wholesale Apps</small><h3>@metrics.PendingWholesaleApplications</h3></div></div>
+            <div class="col-md-3"><div class="card p-3 @(metrics.PendingOrders > 0 ? "border-warning" : "")"><small class="text-secondary">Pending Orders</small><h3>@metrics.PendingOrders</h3></div></div>
+        </div>
+    }
+</div>
+
+@code {
+    private AYIGroupMarket.Application.DTOs.DashboardMetricsDto? metrics;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            metrics = await Sender.Send(new GetDashboardMetricsQuery());
+            StateHasChanged();
+        }
+    }
+}

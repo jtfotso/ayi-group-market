@@ -1,13 +1,19 @@
 @page "/products"
 @attribute [Authorize(Policy = "RequireAdmin")]
 @inject ISender Sender
+@inject IFileStorageService FileStorage
 @using AYIGroupMarket.Application.Features.Products.GetProducts
+@using AYIGroupMarket.Application.Features.Products.GetProductForEdit
 @using AYIGroupMarket.Application.Features.Products.CreateProduct
 @using AYIGroupMarket.Application.Features.Products.UpdateProduct
 @using AYIGroupMarket.Application.Features.Products.DeleteProduct
+@using AYIGroupMarket.Application.Features.Products.AddProductImage
+@using AYIGroupMarket.Application.Features.Products.ManageVariant
 @using AYIGroupMarket.Application.Features.Categories.GetCategories
-@using AYIGroupMarket.Application.DTOs
-@using MediatR
+@using AYIGroupMarket.Application.Abstractions
+@using Microsoft.AspNetCore.Components.Forms
+@using AYIGroupMarket.Application.Features.Products.DeleteProductImage
+@using FluentValidation
 
 <PageTitle>Admin — Products</PageTitle>
 
@@ -16,7 +22,7 @@
 
     <table class="table table-sm">
         <thead>
-            <tr><th>SKU</th><th>Name</th><th>Category</th><th>Retail Price</th><th>Stock</th><th>Active</th><th></th></tr>
+            <tr><th>SKU</th><th>Name</th><th>Category</th><th>Retail</th><th>Wholesale</th><th>Stock</th><th>Active</th><th></th></tr>
         </thead>
         <tbody>
             @if (products is not null)
@@ -30,9 +36,10 @@
                         <td>@p.RetailPrice.ToString("C")</td>
                         <td>-</td>
                         <td>-</td>
+                        <td>-</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => Edit(p.Id)">Edit</button>
-                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(p.Id)">Delete</button>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditProduct(p.Id)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProductAsync(p.Id)">Delete</button>
                         </td>
                     </tr>
                 }
@@ -40,83 +47,268 @@
         </tbody>
     </table>
 
-    <h2>@(editingId is null ? "New Product" : "Edit Product")</h2>
-    <EditForm Model="@form" OnValidSubmit="Save">
-        <div class="row g-2">
-            <div class="col-md-3"><input class="form-control" placeholder="SKU" @bind="form.Sku" /></div>
-            <div class="col-md-3"><input class="form-control" placeholder="Slug" @bind="form.Slug" /></div>
-            <div class="col-md-6">
-                <select class="form-select" @bind="form.CategoryId">
-                    <option value="">-- Category --</option>
-                    @if (categories is not null)
-                    {
-                        @foreach (var c in categories)
+    <button class="btn btn-success mb-4" @onclick="NewProduct">+ New Product</button>
+
+    @if (showForm)
+    {
+        <div class="card p-4">
+            <h2 class="h5">@(editingId is null ? "New Product" : "Edit Product")</h2>
+
+            <div class="row g-2 mt-2">
+                <div class="col-md-3"><input class="form-control" placeholder="SKU" @bind="form.Sku" /></div>
+                <div class="col-md-3"><input class="form-control" placeholder="Slug" @bind="form.Slug" /></div>
+                <div class="col-md-6">
+                    <select class="form-select" @bind="form.CategoryId">
+                        <option value="">-- Category --</option>
+                        @if (categories is not null)
                         {
-                            <option value="@c.Id">@c.Name</option>
+                            @foreach (var c in categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
                         }
+                    </select>
+                </div>
+                <div class="col-md-6"><input class="form-control" placeholder="Name FR" @bind="form.Name" /></div>
+                <div class="col-md-6"><input class="form-control" placeholder="Name EN" @bind="form.NameEn" /></div>
+                <div class="col-md-6"><input class="form-control" placeholder="Short description FR" @bind="form.ShortDescription" /></div>
+                <div class="col-md-6"><input class="form-control" placeholder="Short description EN" @bind="form.ShortDescriptionEn" /></div>
+                <div class="col-12"><textarea class="form-control" placeholder="Description FR" @bind="form.Description"></textarea></div>
+                <div class="col-12"><textarea class="form-control" placeholder="Description EN" @bind="form.DescriptionEn"></textarea></div>
+
+                <div class="col-md-3"><label class="form-label small">Retail Price</label><input type="number" step="0.01" class="form-control" @bind="form.RetailPrice" /></div>
+                <div class="col-md-3"><label class="form-label small">Wholesale Price</label><input type="number" step="0.01" class="form-control" @bind="form.WholesalePrice" /></div>
+                <div class="col-md-3"><label class="form-label small">Min. Wholesale Qty</label><input type="number" class="form-control" @bind="form.MinimumWholesaleQuantity" /></div>
+                <div class="col-md-3"><label class="form-label small">Stock</label><input type="number" class="form-control" @bind="form.StockQuantity" /></div>
+
+                <div class="col-md-3 form-check mt-2"><input type="checkbox" class="form-check-input" @bind="form.IsActive" /><label class="form-check-label">Active</label></div>
+                <div class="col-md-3 form-check mt-2"><input type="checkbox" class="form-check-input" @bind="form.IsFeatured" /><label class="form-check-label">Featured</label></div>
+            </div>
+
+            @if (saveError is not null)
+            {
+                <div class="alert alert-danger mt-2">@saveError</div>
+            }
+            <button class="btn btn-success mt-3" style="width:fit-content;" @onclick="SaveProduct">Save Product</button>
+
+            @if (editingId is not null)
+            {
+                <hr />
+                <h3 class="h6">Images</h3>
+                <InputFile OnChange="HandleImageUpload" />
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    @foreach (var img in images)
+                    {
+                        <div class="position-relative">
+                            <img src="@img.Url" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" class="@(img.IsPrimary ? "border border-success border-3" : "border")" />
+                            @if (!img.IsPrimary)
+                            {
+                                <button class="btn btn-sm btn-outline-success position-absolute top-0 start-0" style="font-size:.6rem;padding:2px 4px;" @onclick="() => SetPrimaryImage(img.Id)">★</button>
+                            }
+                            <button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0" style="font-size:.6rem;padding:2px 4px;" @onclick="() => DeleteImage(img.Id)">✕</button>
+                        </div>
                     }
-                </select>
-            </div>
-            <div class="col-md-6"><input class="form-control" placeholder="Name FR" @bind="form.Name" /></div>
-            <div class="col-md-6"><input class="form-control" placeholder="Name EN" @bind="form.NameEn" /></div>
-            <div class="col-md-3"><input type="number" step="0.01" class="form-control" placeholder="Retail Price" @bind="form.RetailPrice" /></div>
-            <div class="col-md-3"><input type="number" class="form-control" placeholder="Stock" @bind="form.StockQuantity" /></div>
-            <div class="col-md-3 form-check mt-2">
-                <input type="checkbox" class="form-check-input" @bind="form.IsActive" />
-                <label class="form-check-label">Active</label>
-            </div>
-            <div class="col-md-3 form-check mt-2">
-                <input type="checkbox" class="form-check-input" @bind="form.IsFeatured" />
-                <label class="form-check-label">Featured</label>
-            </div>
+                </div>
+
+                <hr />
+                <h3 class="h6">Variants</h3>
+                <table class="table table-sm">
+                    <thead><tr><th>SKU</th><th>Name FR</th><th>Name EN</th><th>Retail</th><th>Wholesale</th><th>Min Qty</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var v in variants)
+                        {
+                            <tr>
+                                <td>@v.Sku</td><td>@v.Name</td><td>@v.NameEn</td>
+                                <td>@v.RetailPrice.ToString("C")</td>
+                                <td>@(v.WholesalePrice?.ToString("C") ?? "-")</td>
+                                <td>@(v.MinimumWholesaleQuantity?.ToString() ?? "-")</td>
+                                <td><button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteVariant(v.Id)">Delete</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="row g-2">
+                    <div class="col-md-2"><input class="form-control form-control-sm" placeholder="SKU" @bind="variantForm.Sku" /></div>
+                    <div class="col-md-2"><input class="form-control form-control-sm" placeholder="Name FR" @bind="variantForm.Name" /></div>
+                    <div class="col-md-2"><input class="form-control form-control-sm" placeholder="Name EN" @bind="variantForm.NameEn" /></div>
+                    <div class="col-md-2"><input type="number" step="0.01" class="form-control form-control-sm" placeholder="Retail" @bind="variantForm.RetailPrice" /></div>
+                    <div class="col-md-2"><input type="number" step="0.01" class="form-control form-control-sm" placeholder="Wholesale" @bind="variantForm.WholesalePrice" /></div>
+                    <div class="col-md-2"><input type="number" class="form-control form-control-sm" placeholder="Min qty" @bind="variantForm.MinimumWholesaleQuantity" /></div>
+                </div>
+                <button class="btn btn-sm btn-success mt-2" style="width:fit-content;" @onclick="AddVariant">+ Add Variant</button>
+            }
         </div>
-        <button class="btn btn-success mt-3" type="submit">Save</button>
-    </EditForm>
+    }
 </div>
 
 @code {
-    private PagedResult<ProductListItemDto>? products;
-    private List<ProductCategoryDto>? categories;
+    private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? products;
+    private List<AYIGroupMarket.Application.DTOs.ProductCategoryDto>? categories;
     private Guid? editingId;
+    private bool showForm = false;
     private ProductFormModel form = new();
-
-    protected override async Task OnInitializedAsync()
+    private VariantFormModel variantForm = new();
+    private List<ProductEditImageDto> images = new();
+    private List<ProductEditVariantDto> variants = new();
+    private string? saveError;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        categories = await Sender.Send(new GetCategoriesQuery(IncludeInactive: true));
-        await Load();
+        if (firstRender)
+        {
+            categories = await Sender.Send(new GetCategoriesQuery(IncludeInactive: true));
+            await Load();
+            StateHasChanged();
+        }
     }
 
     private async Task Load()
     {
-        products = await Sender.Send(new GetProductsQuery(PageSize: 100));
+        products = await Sender.Send(new GetProductsQuery(PageSize: 200));
     }
 
-    private void Edit(Guid id)
+    private void NewProduct()
     {
-        // For a minimal placeholder, full field population on edit is left as a follow-up —
-        // would need a GetProductByIdQuery to fetch all editable fields including description/wholesale price
-        editingId = id;
-    }
-
-    private async Task Save()
-    {
-        if (editingId is null && Guid.TryParse(form.CategoryId, out var categoryId))
-        {
-            await Sender.Send(new CreateProductCommand(
-                form.Sku, form.Slug, categoryId, form.Name, form.NameEn,
-                form.Name, form.NameEn, form.Name, form.NameEn,
-                form.RetailPrice, null, null, form.StockQuantity, form.IsActive, form.IsFeatured));
-        }
-
         editingId = null;
         form = new ProductFormModel();
-        await Load();
+        images = new();
+        variants = new();
+        showForm = true;
     }
 
-    private async Task Delete(Guid id)
+    private async Task EditProduct(Guid id)
+    {
+        var p = await Sender.Send(new GetProductForEditQuery(id));
+        if (p is null) return;
+
+        editingId = p.Id;
+        form = new ProductFormModel
+        {
+            Sku = p.Sku, Slug = p.Slug, CategoryId = p.CategoryId.ToString(),
+            Name = p.Name, NameEn = p.NameEn,
+            ShortDescription = p.ShortDescription, ShortDescriptionEn = p.ShortDescriptionEn,
+            Description = p.Description, DescriptionEn = p.DescriptionEn,
+            RetailPrice = p.RetailPrice, WholesalePrice = p.WholesalePrice,
+            MinimumWholesaleQuantity = p.MinimumWholesaleQuantity,
+            StockQuantity = p.StockQuantity, IsActive = p.IsActive, IsFeatured = p.IsFeatured
+        };
+        images = p.Images;
+        variants = p.Variants;
+        showForm = true;
+    }
+
+    private async Task DeleteImage(Guid imageId)
+    {
+        var url = await Sender.Send(new DeleteProductImageCommand(imageId));
+        await FileStorage.DeleteAsync(url);
+        await RefreshEditingProduct();
+    }
+    private async Task SaveProduct()
+    {
+        saveError = null;
+
+        if (!Guid.TryParse(form.CategoryId, out var categoryId))
+        {
+            saveError = "Please select a category.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(form.Slug))
+        {
+            saveError = "Slug is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(form.Name))
+        {
+            saveError = "Product name (FR) is required.";
+            return;
+        }
+
+        try
+        {
+            if (editingId is null)
+            {
+                var newId = await Sender.Send(new CreateProductCommand(
+                    form.Sku, form.Slug, categoryId, form.Name, form.NameEn,
+                    form.ShortDescription, form.ShortDescriptionEn, form.Description, form.DescriptionEn,
+                    form.RetailPrice, form.WholesalePrice, form.MinimumWholesaleQuantity,
+                    form.StockQuantity, form.IsActive, form.IsFeatured));
+
+                await EditProduct(newId);
+            }
+            else
+            {
+                await Sender.Send(new UpdateProductCommand(
+                    editingId.Value, form.Sku, form.Slug, categoryId, form.Name, form.NameEn,
+                    form.ShortDescription, form.ShortDescriptionEn, form.Description, form.DescriptionEn,
+                    form.RetailPrice, form.WholesalePrice, form.MinimumWholesaleQuantity,
+                    form.StockQuantity, form.IsActive, form.IsFeatured));
+            }
+
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            saveError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
+    }
+    private async Task DeleteProductAsync(Guid id)
     {
         await Sender.Send(new DeleteProductCommand(id));
         await Load();
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        if (editingId is null) return;
+
+        var file = e.File;
+        const long maxSize = 5 * 1024 * 1024; // 5 MB cap
+
+        await using var stream = file.OpenReadStream(maxSize);
+        var url = await FileStorage.SaveAsync(stream, file.Name, file.ContentType);
+
+        var isFirstImage = images.Count == 0;
+        await Sender.Send(new AddProductImageCommand(editingId.Value, url, isFirstImage));
+
+        await RefreshEditingProduct();
+    }
+
+    private async Task SetPrimaryImage(Guid imageId)
+    {
+        if (editingId is null) return;
+        var image = images.First(i => i.Id == imageId);
+        await Sender.Send(new AddProductImageCommand(editingId.Value, image.Url, true));
+        await RefreshEditingProduct();
+    }
+
+    private async Task AddVariant()
+    {
+        if (editingId is null) return;
+
+        await Sender.Send(new UpsertVariantCommand(
+            null, editingId.Value, variantForm.Sku, variantForm.Name, variantForm.NameEn,
+            variantForm.RetailPrice, variantForm.WholesalePrice, variantForm.MinimumWholesaleQuantity));
+
+        variantForm = new VariantFormModel();
+        await RefreshEditingProduct();
+    }
+
+    private async Task DeleteVariant(Guid variantId)
+    {
+        await Sender.Send(new DeleteVariantCommand(variantId));
+        await RefreshEditingProduct();
+    }
+
+    private async Task RefreshEditingProduct()
+    {
+        if (editingId is null) return;
+        var p = await Sender.Send(new GetProductForEditQuery(editingId.Value));
+        if (p is not null)
+        {
+            images = p.Images;
+            variants = p.Variants;
+        }
     }
 
     public class ProductFormModel
@@ -126,9 +318,25 @@
         public string CategoryId { get; set; } = "";
         public string Name { get; set; } = "";
         public string NameEn { get; set; } = "";
+        public string ShortDescription { get; set; } = "";
+        public string ShortDescriptionEn { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string DescriptionEn { get; set; } = "";
         public decimal RetailPrice { get; set; }
+        public decimal? WholesalePrice { get; set; }
+        public int? MinimumWholesaleQuantity { get; set; }
         public int StockQuantity { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; }
+    }
+
+    public class VariantFormModel
+    {
+        public string Sku { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string NameEn { get; set; } = "";
+        public decimal RetailPrice { get; set; }
+        public decimal? WholesalePrice { get; set; }
+        public int? MinimumWholesaleQuantity { get; set; }
     }
 }

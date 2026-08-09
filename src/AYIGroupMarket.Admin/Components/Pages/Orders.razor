@@ -1,0 +1,172 @@
+@page "/orders"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Admin.GetOrders
+@using AYIGroupMarket.Application.Features.Admin.GetOrderDetail
+@using AYIGroupMarket.Application.Features.Admin.UpdateOrderStatus
+@using AYIGroupMarket.Application.Features.Admin.CancelOrder
+@using AYIGroupMarket.Domain.Enums
+
+<PageTitle>Admin — Orders</PageTitle>
+
+<div class="container py-4">
+    <h1>Orders</h1>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input class="form-control" placeholder="Search by order #, name, phone" @bind="searchTerm" @bind:event="oninput" @onkeyup="OnSearch" />
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" @bind="statusFilter" @bind:after="OnStatusFilterChanged">
+                <option value="">All statuses</option>
+                @foreach (var status in Enum.GetValues<OrderStatus>())
+                {
+                    <option value="@status">@status</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Status</th><th>Total</th><th>Payment</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+            @if (orders is not null)
+            {
+                @foreach (var o in orders.Items)
+                {
+                    <tr>
+                        <td>@o.OrderNumber</td>
+                        <td>@o.CustomerName</td>
+                        <td>@o.CustomerPhone</td>
+                        <td><span class="badge @StatusBadgeClass(o.Status)">@o.Status</span></td>
+                        <td>@o.Total.ToString("C")</td>
+                        <td>@o.PaymentMethod</td>
+                        <td>@o.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td><button class="btn btn-sm btn-outline-primary" @onclick="() => OpenDetail(o.Id)">View</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (selectedOrder is not null)
+{
+    <div class="modal d-block" style="background:rgba(0,0,0,.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order @selectedOrder.OrderNumber</h5>
+                    <button class="btn-close" @onclick="() => selectedOrder = null"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Customer:</strong> @selectedOrder.CustomerName — @selectedOrder.CustomerPhone @(selectedOrder.CustomerEmail is not null ? $"— {selectedOrder.CustomerEmail}" : "")</p>
+                    <p><strong>Delivery:</strong> @selectedOrder.AddressLine, @selectedOrder.City (@selectedOrder.ShippingZoneName)</p>
+                    <p><strong>Payment method:</strong> @selectedOrder.PaymentMethod</p>
+
+                    <table class="table table-sm">
+                        <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in selectedOrder.Items)
+                            {
+                                <tr><td>@item.ProductName</td><td>@item.Quantity</td><td>@item.LineTotal.ToString("C")</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                    <p class="fw-bold">Total: @selectedOrder.Total.ToString("C")</p>
+
+                    <div class="row g-2 mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="newStatus">
+                                @foreach (var status in Enum.GetValues<OrderStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tracking number</label>
+                            <input class="form-control" @bind="trackingNumber" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-danger" @onclick="() => CancelSelectedOrder()">Cancel Order</button>
+                    <button class="btn btn-success" @onclick="SaveStatus">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResult<AYIGroupMarket.Application.DTOs.AdminOrderListItemDto>? orders;
+    private string searchTerm = "";
+    private string statusFilter = "";
+    private AYIGroupMarket.Application.DTOs.AdminOrderDetailDto? selectedOrder;
+    private OrderStatus newStatus;
+    private string trackingNumber = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        OrderStatus? status = string.IsNullOrEmpty(statusFilter) ? null : Enum.Parse<OrderStatus>(statusFilter);
+        orders = await Sender.Send(new GetOrdersQuery(status, string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm));
+    }
+
+    private async Task OnStatusFilterChanged() => await Load();
+    private async Task OnSearch(KeyboardEventArgs e) => await Load();
+
+    private async Task OpenDetail(Guid orderId)
+    {
+        selectedOrder = await Sender.Send(new GetOrderDetailQuery(orderId));
+        if (selectedOrder is not null)
+        {
+            newStatus = Enum.Parse<OrderStatus>(selectedOrder.Status);
+            trackingNumber = selectedOrder.TrackingNumber ?? "";
+        }
+    }
+
+    private async Task SaveStatus()
+    {
+        if (selectedOrder is null) return;
+
+        await Sender.Send(new UpdateOrderStatusCommand(selectedOrder.Id, newStatus, string.IsNullOrWhiteSpace(trackingNumber) ? null : trackingNumber));
+        selectedOrder = null;
+        await Load();
+    }
+
+    private async Task CancelSelectedOrder()
+    {
+        if (selectedOrder is null) return;
+
+        await Sender.Send(new CancelOrderCommand(selectedOrder.Id, "Cancelled by admin"));
+        selectedOrder = null;
+        await Load();
+    }
+
+    private string StatusBadgeClass(string status) => status switch
+    {
+        "Pending" => "bg-secondary",
+        "PaymentPending" => "bg-warning text-dark",
+        "Paid" => "bg-success",
+        "Processing" => "bg-info text-dark",
+        "ReadyForDelivery" => "bg-primary",
+        "Shipped" => "bg-primary",
+        "Delivered" => "bg-success",
+        "Cancelled" => "bg-danger",
+        "Refunded" => "bg-dark",
+        _ => "bg-secondary"
+    };
+}

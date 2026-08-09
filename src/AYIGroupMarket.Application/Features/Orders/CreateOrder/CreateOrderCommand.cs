@@ -97,6 +97,19 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
             };
 
             db.OrderItems.Add(orderItem);
+
+            // Decrement stock and log the transaction — product-level stock only;
+            // variant-level stock tracking isn't modeled yet (ProductVariant has no StockQuantity field currently)
+            cartItem.Product.StockQuantity -= cartItem.Quantity;
+
+            db.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductId = cartItem.ProductId,
+                Type = InventoryTransactionType.Sale,
+                QuantityChange = -cartItem.Quantity,
+                ResultingStock = cartItem.Product.StockQuantity,
+                Reason = $"Order {orderNumber}"
+            });
         }
 
         db.Orders.Add(order);

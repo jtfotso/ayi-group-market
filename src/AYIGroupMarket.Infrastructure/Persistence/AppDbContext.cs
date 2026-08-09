@@ -32,6 +32,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // required — configures Identity's own tables
@@ -39,4 +40,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
         // Apply all IEntityTypeConfiguration<T> classes in this assembly
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
+    public Task<int> GetTotalUserCountAsync(CancellationToken cancellationToken = default)
+    => Users.CountAsync(cancellationToken);
 }

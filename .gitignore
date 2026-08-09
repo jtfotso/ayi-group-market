@@ -482,4 +482,4 @@ $RECYCLE.BIN/
 *.swp
 appsettings.Development.json
 *.user
-.dataprotection-keys/
+.dataprotection-keys/shared-uploads/

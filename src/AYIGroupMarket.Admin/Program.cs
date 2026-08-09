@@ -2,6 +2,8 @@ using AYIGroupMarket.Application;
 using AYIGroupMarket.Infrastructure;
 using AYIGroupMarket.Admin.Components;
 using Microsoft.AspNetCore.Identity;
+using AYIGroupMarket.Application.Abstractions;
+using AYIGroupMarket.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 var app = builder.Build();
 
@@ -38,6 +41,15 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
+Directory.CreateDirectory(uploadsPath); // ensure it exists even on first run
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
@@ -98,5 +110,7 @@ app.MapPost("/account/logout", async (
     await signInManager.SignOutAsync();
     return Results.LocalRedirect("/");
 }).DisableAntiforgery();
+
+
 
 app.Run();
