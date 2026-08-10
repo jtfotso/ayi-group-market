@@ -1,5 +1,6 @@
 using AYIGroupMarket.Application.Abstractions;
 using AYIGroupMarket.Application.DTOs;
+using AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode;
 using AYIGroupMarket.Domain.Entities;
 using AYIGroupMarket.Domain.Enums;
 using FluentValidation;
@@ -13,7 +14,9 @@ public record CreateOrderCommand(
     CreateAddressRequest Address,
     Guid ShippingRateId,
     PaymentMethod PaymentMethod,
-    string? Notes) : IRequest<OrderDto>;
+    string? Notes,
+    string? PromoCode,
+    bool IsWholesaleAuthorized) : IRequest<OrderDto>;
 
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
@@ -29,7 +32,8 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     }
 }
 
-public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGenerator orderNumberGenerator, INotificationService notificationService)
+public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGenerator orderNumberGenerator, INotificationService notificationService,
+    ISender sender)
     : IRequestHandler<CreateOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -64,6 +68,20 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
 
         var orderNumber = await orderNumberGenerator.GenerateAsync(cancellationToken);
 
+        decimal discountAmount = 0;
+        if (!string.IsNullOrWhiteSpace(request.PromoCode))
+        {
+            var promoResult = await sender.Send(
+                new AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode.ValidatePromotionCodeQuery(
+                    request.PromoCode, subtotal, cart.Items.Sum(i => i.Quantity), request.IsWholesaleAuthorized),
+                cancellationToken);
+
+            if (promoResult.IsValid)
+                discountAmount = promoResult.DiscountAmount;
+            // if invalid at this point (e.g. expired between UI check and submit), silently apply no discount
+            // rather than failing the whole order — arguably should surface an error instead; worth deciding later
+        }
+
         var order = new Order
         {
             OrderNumber = orderNumber,
@@ -74,11 +92,19 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
             Status = OrderStatus.PaymentPending,
             Subtotal = subtotal,
             ShippingFee = shippingFee,
-            DiscountAmount = 0,
+            DiscountAmount = discountAmount,
             TaxAmount = 0,
-            Total = subtotal + shippingFee,
+            Total = subtotal + shippingFee - discountAmount,
+            PromoCode = request.PromoCode,
             Notes = request.Notes
         };
+
+        if (!string.IsNullOrWhiteSpace(request.PromoCode) && discountAmount > 0)
+        {
+            var promo = await db.Promotions.FirstOrDefaultAsync(p => p.Code == request.PromoCode.ToUpper(), cancellationToken);
+            if (promo is not null)
+                promo.UsesCount++;
+        }
 
         foreach (var cartItem in cart.Items)
         {

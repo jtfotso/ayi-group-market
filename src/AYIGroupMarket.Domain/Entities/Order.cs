@@ -23,7 +23,7 @@ public class Order : BaseEntity
     public decimal DiscountAmount { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal Total { get; set; }
-
+    public string? PromoCode { get; set; }
     public string? Notes { get; set; }
     public string? TrackingNumber { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

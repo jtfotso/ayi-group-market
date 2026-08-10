@@ -1,0 +1,121 @@
+@page "/customers"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Admin.GetCustomers
+@using AYIGroupMarket.Application.Features.Admin.GetCustomerDetail
+
+<PageTitle>Admin — Customers</PageTitle>
+
+<div class="container py-4">
+    <h1>Customers</h1>
+
+    <input class="form-control mb-3" style="max-width:400px;" placeholder="Search by name or email"
+           @bind="searchTerm" @bind:event="oninput" @onkeyup="OnSearch" />
+
+    <table class="table">
+        <thead>
+            <tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th><th>Total Spent</th><th>Wholesale</th><th></th></tr>
+        </thead>
+        <tbody>
+            @if (customers is not null)
+            {
+                @foreach (var c in customers)
+                {
+                    <tr>
+                        <td>@c.FirstName @c.LastName</td>
+                        <td>@c.Email</td>
+                        <td>@c.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td>@c.OrderCount</td>
+                        <td>@c.TotalSpent.ToString("C")</td>
+                        <td>
+                            @if (c.IsWholesale)
+                            {
+                                <span class="badge @WholesaleBadgeClass(c.WholesaleStatus)">@c.WholesaleStatus</span>
+                            }
+                            else
+                            {
+                                <span class="text-secondary">-</span>
+                            }
+                        </td>
+                        <td><button class="btn btn-sm btn-outline-primary" @onclick="() => ViewDetail(c.Id)">View</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (selectedCustomer is not null)
+{
+    <div class="modal d-block" style="background:rgba(0,0,0,.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedCustomer.FirstName @selectedCustomer.LastName</h5>
+                    <button class="btn-close" @onclick="() => selectedCustomer = null"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Email:</strong> @selectedCustomer.Email</p>
+                    <p><strong>Joined:</strong> @selectedCustomer.CreatedAt.ToString("dd/MM/yyyy")</p>
+                    @if (selectedCustomer.WholesaleStatus is not null)
+                    {
+                        <p><strong>Wholesale:</strong> @selectedCustomer.WholesaleCompanyName (@selectedCustomer.WholesaleStatus)</p>
+                    }
+
+                    <h6 class="mt-3">Order History</h6>
+                    @if (!selectedCustomer.Orders.Any())
+                    {
+                        <p class="text-secondary small">No orders yet.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead><tr><th>Order #</th><th>Status</th><th>Total</th></tr></thead>
+                            <tbody>
+                                @foreach (var order in selectedCustomer.Orders)
+                                {
+                                    <tr><td>@order.OrderNumber</td><td>@order.Status</td><td>@order.Total.ToString("C")</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<AYIGroupMarket.Application.DTOs.AdminCustomerListItemDto>? customers;
+    private AYIGroupMarket.Application.DTOs.AdminCustomerDetailDto? selectedCustomer;
+    private string searchTerm = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        customers = await Sender.Send(new GetCustomersQuery(string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm));
+    }
+
+    private async Task OnSearch(KeyboardEventArgs e) => await Load();
+
+    private async Task ViewDetail(string userId)
+    {
+        selectedCustomer = await Sender.Send(new GetCustomerDetailQuery(userId));
+    }
+
+    private string WholesaleBadgeClass(string? status) => status switch
+    {
+        "Approved" => "bg-success",
+        "Rejected" => "bg-danger",
+        "Suspended" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}

@@ -27,7 +27,9 @@ public interface IApplicationDbContext
     DbSet<QuoteRequestItem> QuoteRequestItems { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<InventoryTransaction> InventoryTransactions { get; }
-    
+    DbSet<Promotion> Promotions { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> GetTotalUserCountAsync(CancellationToken cancellationToken = default);
+    Task<List<CustomerSummary>> GetCustomerSummariesAsync(string? searchTerm, CancellationToken cancellationToken = default);
+    Task<CustomerSummary?> GetCustomerSummaryAsync(string userId, CancellationToken cancellationToken = default);
 }

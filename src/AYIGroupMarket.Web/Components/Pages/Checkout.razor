@@ -3,6 +3,8 @@
 @inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@using AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode
 @inject AYIGroupMarket.Web.Services.CartNotifier CartNotifier
 @using AYIGroupMarket.Application.Features.Cart.GetCart
 @using AYIGroupMarket.Application.Features.Shipping.GetShippingZones
@@ -169,7 +171,19 @@
 
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Livraison" : "Delivery")</h3>
                         <p class="small text-secondary">@addressLine, @city</p>
-
+                        <h3 class="h6 fw-bold mt-3">@(IsFr ? "Code promo" : "Promo code")</h3>
+                        <div class="d-flex gap-2 mb-2">
+                            <input class="form-control" style="max-width:200px;" placeholder="@(IsFr ? "Code" : "Code")" @bind="promoCode" />
+                            <button class="btn btn-outline-success" @onclick="ApplyPromoCode" type="button">@(IsFr ? "Appliquer" : "Apply")</button>
+                        </div>
+                        @if (promoErrorMessage is not null)
+                        {
+                            <div class="alert alert-warning py-2">@promoErrorMessage</div>
+                        }
+                        @if (appliedDiscount > 0)
+                        {
+                            <div class="alert alert-success py-2">@(IsFr ? "Réduction appliquée" : "Discount applied"): @appliedDiscount.ToString("C")</div>
+                        }
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Articles" : "Items")</h3>
                         @foreach (var item in cart.Items)
                         {
@@ -207,10 +221,17 @@
                             <span>@(IsFr ? "Livraison" : "Shipping")</span>
                             <span>@currentShippingFee.Value.ToString("C")</span>
                         </div>
+                        @if (appliedDiscount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>@(IsFr ? "Réduction" : "Discount")</span>
+                                <span>-@appliedDiscount.ToString("C")</span>
+                            </div>
+                        }
                         <hr />
                         <div class="d-flex justify-content-between fw-bold">
                             <span>Total</span>
-                            <span>@((cart.Total + currentShippingFee.Value).ToString("C"))</span>
+                            <span>@((cart.Total + currentShippingFee.Value - appliedDiscount).ToString("C"))</span>
                         </div>
                     }
                 </div>
@@ -233,6 +254,9 @@
     private string city = "";
     private string selectedZoneId = "";
     private string selectedRateId = "";
+    private string promoCode = "";
+    private string? promoErrorMessage;
+    private decimal appliedDiscount = 0;
     private PaymentMethod selectedPaymentMethod = PaymentMethod.MobileMoney;
 
     private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
@@ -307,6 +331,24 @@
         _ => ""
     };
 
+    private async Task ApplyPromoCode()
+    {
+        promoErrorMessage = null;
+        appliedDiscount = 0;
+
+        if (string.IsNullOrWhiteSpace(promoCode)) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var isWholesale = authState.User.IsInRole("Wholesale");
+
+        var result = await Sender.Send(new AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode.ValidatePromotionCodeQuery(
+            promoCode, cart!.Total, cart.Items.Sum(i => i.Quantity), isWholesale));
+
+        if (result.IsValid)
+            appliedDiscount = result.DiscountAmount;
+        else
+            promoErrorMessage = result.ErrorMessage;
+    }
     private async Task SubmitOrder()
     {
         isSubmitting = true;
@@ -317,12 +359,17 @@
         {
             var ownerKey = await CartSession.GetOwnerKeyAsync();
 
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var isWholesale = authState.User.IsInRole("Wholesale");
+
             var orderResult = await Sender.Send(new CreateOrderCommand(
                 ownerKey,
                 new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.Parse(selectedZoneId)),
                 Guid.Parse(selectedRateId),
                 selectedPaymentMethod,
-                null));
+                null, // Notes
+                string.IsNullOrWhiteSpace(promoCode) ? null : promoCode,
+                isWholesale));
 
             var paymentResult = await Sender.Send(new AYIGroupMarket.Application.Features.Payments.InitiatePayment.InitiatePaymentCommand(orderResult.Id));
 

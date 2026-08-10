@@ -33,6 +33,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<Favorite> Favorites => Set<Favorite>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // required — configures Identity's own tables
@@ -42,4 +43,29 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     }
     public Task<int> GetTotalUserCountAsync(CancellationToken cancellationToken = default)
     => Users.CountAsync(cancellationToken);
+
+    public async Task<List<Application.Abstractions.CustomerSummary>> GetCustomerSummariesAsync(string? searchTerm, CancellationToken cancellationToken = default)
+    {
+        var query = Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(u =>
+                (u.Email != null && u.Email.Contains(term)) ||
+                u.FirstName.Contains(term) ||
+                u.LastName.Contains(term));
+        }
+
+        return await query
+            .OrderByDescending(u => u.CreatedAt)
+            .Select(u => new Application.Abstractions.CustomerSummary(u.Id, u.Email ?? "", u.FirstName, u.LastName, u.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Application.Abstractions.CustomerSummary?> GetCustomerSummaryAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        return user is null ? null : new Application.Abstractions.CustomerSummary(user.Id, user.Email ?? "", user.FirstName, user.LastName, user.CreatedAt);
+    }
 }
