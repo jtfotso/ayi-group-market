@@ -4,6 +4,7 @@ using AYIGroupMarket.Admin.Components;
 using Microsoft.AspNetCore.Identity;
 using AYIGroupMarket.Application.Abstractions;
 using AYIGroupMarket.Infrastructure.Storage;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,6 +112,15 @@ app.MapPost("/account/logout", async (
     return Results.LocalRedirect("/");
 }).DisableAntiforgery();
 
+app.MapGet("/orders/export.csv", async (
+    ISender sender, DateTime? start, DateTime? end, CancellationToken cancellationToken) =>
+{
+    var startDate = start ?? DateTime.Today.AddMonths(-1);
+    var endDate = (end ?? DateTime.Today).AddDays(1).AddTicks(-1);
 
+    var csvBytes = await sender.Send(new AYIGroupMarket.Application.Features.Admin.ExportOrdersCsv.ExportOrdersCsvQuery(startDate, endDate), cancellationToken);
+
+    return Results.File(csvBytes, "text/csv", $"orders-export-{DateTime.Today:yyyy-MM-dd}.csv");
+}).RequireAuthorization("RequireAdmin");
 
 app.Run();

@@ -1,0 +1,96 @@
+@page "/reports"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Admin.GetSalesReport
+
+<PageTitle>Admin — Reports</PageTitle>
+
+<div class="container py-4">
+    <h1>Sales Report</h1>
+
+    <div class="row g-2 mb-4">
+        <div class="col-md-3">
+            <label class="form-label small">Start date</label>
+            <input type="date" class="form-control" @bind="startDate" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">End date</label>
+            <input type="date" class="form-control" @bind="endDate" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Group by</label>
+            <select class="form-select" @bind="grouping">
+                <option value="Day">Day</option>
+                <option value="Week">Week</option>
+                <option value="Month">Month</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-success w-100" @onclick="LoadReport">Run Report</button>
+        </div>
+    </div>
+
+    @if (report is not null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Total Revenue</small><h3>@report.TotalRevenue.ToString("C")</h3></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Total Orders</small><h3>@report.TotalOrders</h3></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Avg. Order Value</small><h3>@(report.TotalOrders > 0 ? (report.TotalRevenue / report.TotalOrders).ToString("C") : "-")</h3></div></div>
+        </div>
+
+        @if (report.Periods.Count == 0)
+        {
+            <p class="text-secondary">No orders in this period.</p>
+        }
+        else
+        {
+            <!-- Simple CSS bar chart — no charting library dependency needed for this scale -->
+            <div class="card p-3 mb-4">
+                <div class="d-flex align-items-end gap-2" style="height:200px;">
+                    @{
+                        var maxRevenue = report.Periods.Max(p => p.Revenue);
+                    }
+                    @foreach (var period in report.Periods)
+                    {
+                        var heightPercent = maxRevenue > 0 ? (double)(period.Revenue / maxRevenue) * 100 : 0;
+                        <div class="d-flex flex-column align-items-center flex-grow-1" style="height:100%;">
+                            <div class="bg-success rounded-top w-100" style="height:@(heightPercent)%; min-height:2px;" title="@period.Revenue.ToString("C")"></div>
+                            <small class="text-secondary mt-1" style="font-size:.7rem;">@period.PeriodLabel</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <table class="table table-sm">
+                <thead><tr><th>Period</th><th>Orders</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @foreach (var period in report.Periods)
+                    {
+                        <tr><td>@period.PeriodLabel</td><td>@period.OrderCount</td><td>@period.Revenue.ToString("C")</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+@code {
+    private DateTime startDate = DateTime.Today.AddMonths(-1);
+    private DateTime endDate = DateTime.Today;
+    private ReportGrouping grouping = ReportGrouping.Day;
+    private AYIGroupMarket.Application.DTOs.SalesReportDto? report;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadReport();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadReport()
+    {
+        report = await Sender.Send(new GetSalesReportQuery(startDate, endDate.AddDays(1).AddTicks(-1), grouping));
+    }
+}

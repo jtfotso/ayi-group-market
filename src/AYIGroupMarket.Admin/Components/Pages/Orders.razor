@@ -25,6 +25,19 @@
                 }
             </select>
         </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Export from</label>
+            <input type="date" class="form-control" @bind="exportStartDate" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Export to</label>
+            <input type="date" class="form-control" @bind="exportEndDate" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <a href="@ExportUrl" class="btn btn-outline-success w-100" target="_blank">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </div>
     </div>
 
     <table class="table">
@@ -109,7 +122,8 @@
     private AYIGroupMarket.Application.DTOs.AdminOrderDetailDto? selectedOrder;
     private OrderStatus newStatus;
     private string trackingNumber = "";
-
+    private DateTime exportStartDate = DateTime.Today.AddMonths(-1);
+    private DateTime exportEndDate = DateTime.Today;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -169,4 +183,6 @@
         "Refunded" => "bg-dark",
         _ => "bg-secondary"
     };
+    private string ExportUrl =>
+        $"/orders/export.csv?start={exportStartDate:yyyy-MM-dd}&end={exportEndDate:yyyy-MM-dd}";
 }
