@@ -1,30 +1,64 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">AYIGroupMarket.Admin</a>
+﻿<div class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+        <span class="admin-logo-mark">A</span>
+        <div>
+            <div class="fw-bold">AYI GROUP</div>
+            <small class="text-uppercase" style="font-size:.65rem; letter-spacing:.08em; color:#8ea495;">Admin</small>
+        </div>
+    </div>
+
+    <nav class="admin-nav">
+        <div class="admin-nav-section">Overview</div>
+        <NavLink class="admin-nav-link" href="/dashboard" Match="NavLinkMatch.All">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </NavLink>
+        <NavLink class="admin-nav-link" href="/reports">
+            <i class="bi bi-graph-up"></i> Reports
+        </NavLink>
+
+        <div class="admin-nav-section">Catalog</div>
+        <NavLink class="admin-nav-link" href="/products">
+            <i class="bi bi-box-seam"></i> Products
+        </NavLink>
+        <NavLink class="admin-nav-link" href="/categories">
+            <i class="bi bi-tags"></i> Categories
+        </NavLink>
+        <NavLink class="admin-nav-link" href="/promotions">
+            <i class="bi bi-percent"></i> Promotions
+        </NavLink>
+
+        <div class="admin-nav-section">Sales</div>
+        <NavLink class="admin-nav-link" href="/orders">
+            <i class="bi bi-receipt"></i> Orders
+        </NavLink>
+        <NavLink class="admin-nav-link" href="/customers">
+            <i class="bi bi-people"></i> Customers
+        </NavLink>
+
+        <div class="admin-nav-section">Wholesale</div>
+        <NavLink class="admin-nav-link" href="/wholesale-accounts">
+            <i class="bi bi-building"></i> Wholesale Accounts
+        </NavLink>
+        <NavLink class="admin-nav-link" href="/quote-requests">
+            <i class="bi bi-file-earmark-text"></i> Quote Requests
+        </NavLink>
+
+        <div class="admin-nav-section">Content</div>
+        <NavLink class="admin-nav-link" href="/reviews">
+            <i class="bi bi-star"></i> Reviews
+        </NavLink>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+        <AuthorizeView>
+            <Authorized>
+                <div class="small text-secondary mb-2 px-2">@context.User.Identity?.Name</div>
+                <form method="post" action="/account/logout">
+                    <button type="submit" class="admin-nav-link w-100 border-0 bg-transparent text-start">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </form>
+            </Authorized>
+        </AuthorizeView>
     </div>
 </div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        @* <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div> *@
-    </nav>
-</div>
-

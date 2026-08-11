@@ -58,3 +58,103 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #0e1712;
+  color: #cfe0d6;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+}
+
+.admin-logo-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(155deg, #198754, #146c43);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.admin-nav {
+  flex: 1;
+  padding: 12px 8px;
+}
+
+.admin-nav-section {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #6e8577;
+  padding: 14px 12px 6px;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: #cfe0d6;
+  text-decoration: none;
+  font-size: .9rem;
+  margin-bottom: 2px;
+}
+
+.admin-nav-link:hover {
+  background: rgba(255,255,255,.06);
+  color: #fff;
+}
+
+.admin-nav-link.active {
+  background: #198754;
+  color: #fff;
+}
+
+.admin-sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.admin-main {
+  flex: 1;
+  background: #f8f9fa;
+  min-width: 0;
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+  .admin-shell {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+  }
+}
