@@ -207,12 +207,12 @@
     {
         saveError = null;
 
-        if (!Guid.TryParse(form.CategoryId, out var categoryId))
+         if (!Guid.TryParse(form.CategoryId, out var categoryId))
         {
             saveError = "Please select a category.";
             return;
         }
-        if (string.IsNullOrWhiteSpace(form.Slug))
+        @*if (string.IsNullOrWhiteSpace(form.Slug))
         {
             saveError = "Slug is required.";
             return;
@@ -222,7 +222,7 @@
         {
             saveError = "Product name (FR) is required.";
             return;
-        }
+        } *@
 
         try
         {
@@ -250,6 +250,10 @@
         catch (FluentValidation.ValidationException ex)
         {
             saveError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
+        catch (Exception ex)
+        {
+            saveError = ex.Message;
         }
     }
     private async Task DeleteProductAsync(Guid id)

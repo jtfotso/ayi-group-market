@@ -147,9 +147,13 @@
 
             Nav.NavigateTo("/grossistes", forceLoad: true);
         }
-        catch (Exception)
+        catch (FluentValidation.ValidationException ex)
         {
-            errorMessage = IsFr ? "Une erreur est survenue." : "Something went wrong.";
+            errorMessage = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
         }
         finally
         {

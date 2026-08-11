@@ -31,7 +31,10 @@
             }
         </tbody>
     </table>
-
+    @if (createError is not null)
+    {
+        <div class="alert alert-danger">@createError</div>
+    }
     <div class="card p-4 mt-3">
         <h2 class="h5">New Promotion</h2>
         <div class="row g-2">
@@ -72,6 +75,7 @@
     private DateTime endDate = DateTime.Today.AddMonths(1);
     private PromotionCustomerType customerType = PromotionCustomerType.All;
     private int? maxUses;
+    private string? createError;
 
     [Inject] private AppDbContext Db { get; set; } = null!;
 
@@ -91,6 +95,14 @@
 
     private async Task Create()
     {
+        createError = null;
+
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            createError = "Code is required.";
+            return;
+        }
+
         var promo = new Promotion
         {
             Code = code.ToUpper(),
@@ -105,10 +117,17 @@
             IsActive = true
         };
 
-        Db.Promotions.Add(promo);
-        await Db.SaveChangesAsync();
+        try
+        {
+            Db.Promotions.Add(promo);
+            await Db.SaveChangesAsync();
 
-        code = ""; discountValue = 0; minOrderAmount = null; maxUses = null;
-        await Load();
+            code = ""; discountValue = 0; minOrderAmount = null; maxUses = null;
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            createError = $"Could not save: {ex.Message}"; // likely the unique Code constraint if a duplicate is entered
+        }
     }
 }

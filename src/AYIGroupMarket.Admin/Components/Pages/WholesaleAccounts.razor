@@ -21,6 +21,10 @@
             </tr>
         </thead>
         <tbody>
+            @if (actionError is not null)
+            {
+                <div class="alert alert-danger">@actionError</div>
+            }
             @if (accounts is not null)
             {
                 @foreach (var a in accounts)
@@ -53,7 +57,7 @@
 
 @code {
     private List<AYIGroupMarket.Domain.Entities.WholesaleAccount>? accounts;
-
+    private string? actionError;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -76,23 +80,47 @@
 
     private async Task Approve(Guid id)
     {
-        var adminId = await GetCurrentAdminUserId();
-        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Approved, adminId, null));
-        await Load();
+        actionError = null;
+        try
+        {
+            var adminId = await GetCurrentAdminUserId();
+            await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Approved, adminId, null));
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            actionError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private async Task Reject(Guid id)
     {
-        var adminId = await GetCurrentAdminUserId();
-        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Rejected, adminId, "Does not meet requirements"));
-        await Load();
+        actionError = null;
+        try
+        {
+            var adminId = await GetCurrentAdminUserId();
+            await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Rejected, adminId, "Does not meet requirements"));
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            actionError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private async Task Suspend(Guid id)
     {
-        var adminId = await GetCurrentAdminUserId();
-        await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Suspended, adminId, null));
-        await Load();
+        actionError = null;
+        try
+        {
+            var adminId = await GetCurrentAdminUserId();
+            await Sender.Send(new ReviewWholesaleAccountCommand(id, WholesaleStatus.Suspended, adminId, null));
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            actionError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private string StatusBadgeClass(WholesaleStatus status) => status switch

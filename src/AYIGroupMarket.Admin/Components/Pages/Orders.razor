@@ -75,6 +75,10 @@
                     <button class="btn-close" @onclick="() => selectedOrder = null"></button>
                 </div>
                 <div class="modal-body">
+                    @if (actionError is not null)
+                    {
+                        <div class="alert alert-danger">@actionError</div>
+                    }
                     <p><strong>Customer:</strong> @selectedOrder.CustomerName — @selectedOrder.CustomerPhone @(selectedOrder.CustomerEmail is not null ? $"— {selectedOrder.CustomerEmail}" : "")</p>
                     <p><strong>Delivery:</strong> @selectedOrder.AddressLine, @selectedOrder.City (@selectedOrder.ShippingZoneName)</p>
                     <p><strong>Payment method:</strong> @selectedOrder.PaymentMethod</p>
@@ -121,6 +125,7 @@
     private string statusFilter = "";
     private AYIGroupMarket.Application.DTOs.AdminOrderDetailDto? selectedOrder;
     private OrderStatus newStatus;
+    private string? actionError;
     private string trackingNumber = "";
     private DateTime exportStartDate = DateTime.Today.AddMonths(-1);
     private DateTime exportEndDate = DateTime.Today;
@@ -155,19 +160,35 @@
     private async Task SaveStatus()
     {
         if (selectedOrder is null) return;
+        actionError = null;
 
-        await Sender.Send(new UpdateOrderStatusCommand(selectedOrder.Id, newStatus, string.IsNullOrWhiteSpace(trackingNumber) ? null : trackingNumber));
-        selectedOrder = null;
-        await Load();
+        try
+        {
+            await Sender.Send(new UpdateOrderStatusCommand(selectedOrder.Id, newStatus, string.IsNullOrWhiteSpace(trackingNumber) ? null : trackingNumber));
+            selectedOrder = null;
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            actionError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private async Task CancelSelectedOrder()
     {
         if (selectedOrder is null) return;
+        actionError = null;
 
-        await Sender.Send(new CancelOrderCommand(selectedOrder.Id, "Cancelled by admin"));
-        selectedOrder = null;
-        await Load();
+        try
+        {
+            await Sender.Send(new CancelOrderCommand(selectedOrder.Id, "Cancelled by admin"));
+            selectedOrder = null;
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            actionError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private string StatusBadgeClass(string status) => status switch

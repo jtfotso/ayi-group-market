@@ -7,6 +7,10 @@
 
 <PageTitle>Admin — Reviews</PageTitle>
 
+@if (moderateError is not null)
+{
+    <div class="alert alert-danger">@moderateError</div>
+}
 <div class="container py-4">
     <h1>Pending Reviews</h1>
 
@@ -34,7 +38,7 @@
 
 @code {
     private List<AYIGroupMarket.Domain.Entities.ProductReview>? reviews;
-
+    private string? moderateError;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -51,7 +55,16 @@
 
     private async Task Moderate(Guid reviewId, ReviewStatus status)
     {
-        await Sender.Send(new ModerateReviewCommand(reviewId, status));
-        await Load();
+        moderateError = null;
+
+        try
+        {
+            await Sender.Send(new ModerateReviewCommand(reviewId, status));
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            moderateError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 }

@@ -54,6 +54,10 @@
                 <label class="form-check-label">Active</label>
             </div>
         </div>
+        @if (saveError is not null)
+        {
+            <div class="alert alert-danger mt-2">@saveError</div>
+        }
         <button class="btn btn-success mt-3" type="submit">Save</button>
         @if (editingId is not null)
         {
@@ -65,6 +69,7 @@
 @code {
     private List<ProductCategoryDto>? categories;
     private Guid? editingId;
+    private string? saveError;
     private CategoryFormModel form = new();
 
     protected override async Task OnInitializedAsync() => await Load();
@@ -92,19 +97,28 @@
 
     private async Task Save()
     {
-        if (editingId is null)
-        {
-            await Sender.Send(new CreateCategoryCommand(
-                form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
-        }
-        else
-        {
-            await Sender.Send(new UpdateCategoryCommand(
-                editingId.Value, form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
-        }
+        saveError = null;
 
-        ResetForm();
-        await Load();
+        try
+        {
+            if (editingId is null)
+            {
+                await Sender.Send(new CreateCategoryCommand(
+                    form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
+            }
+            else
+            {
+                await Sender.Send(new UpdateCategoryCommand(
+                    editingId.Value, form.Name, form.NameEn, form.Slug, form.Icon, form.DisplayOrder, form.IsActive));
+            }
+
+            ResetForm();
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            saveError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 
     private async Task Delete(Guid id)

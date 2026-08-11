@@ -9,7 +9,10 @@
 
 <div class="container py-4">
     <h1>Quote Requests</h1>
-
+    @if (respondError is not null)
+    {
+        <div class="alert alert-danger">@respondError</div>
+    }
     @if (quotes is not null)
     {
         @foreach (var q in quotes)
@@ -63,6 +66,7 @@
 
 @code {
     private List<QuoteRequestDto>? quotes;
+    private string? respondError;
     private Dictionary<(Guid quoteId, Guid productId), decimal> priceInputs = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -87,6 +91,7 @@
 
     private async Task Respond(Guid quoteId)
     {
+        respondError = null;
         var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
         if (quote is null) return;
 
@@ -97,7 +102,14 @@
 
         if (itemPrices.Count == 0) return;
 
-        await Sender.Send(new RespondToQuoteRequestCommand(quoteId, itemPrices));
-        await Load();
+        try
+        {
+            await Sender.Send(new RespondToQuoteRequestCommand(quoteId, itemPrices));
+            await Load();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            respondError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
     }
 }
