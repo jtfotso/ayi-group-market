@@ -45,11 +45,11 @@ app.MapStaticAssets();
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
 Directory.CreateDirectory(uploadsPath); // ensure it exists even on first run
 
-app.UseStaticFiles(new StaticFileOptions
+/* app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads"
-});
+}); */
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

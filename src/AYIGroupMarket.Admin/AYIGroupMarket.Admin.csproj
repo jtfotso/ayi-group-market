@@ -5,11 +5,13 @@
     <ProjectReference Include="..\AYIGroupMarket.Infrastructure\AYIGroupMarket.Infrastructure.csproj" />
   </ItemGroup>
 
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>AYIGroupMarket-Admin</UserSecretsId>
   </PropertyGroup>
 
 </Project>
