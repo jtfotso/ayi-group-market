@@ -83,8 +83,8 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
-Directory.CreateDirectory(uploadsPath); // ensure it exists even on first run
+/* var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
+Directory.CreateDirectory(uploadsPath); */ // ensure it exists even on first run
 
 /* app.UseStaticFiles(new StaticFileOptions
 {

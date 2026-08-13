@@ -22,7 +22,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IFileStorageService, AzureBlobFileStorageService>();
 
 var app = builder.Build();
 
@@ -42,8 +42,8 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
-Directory.CreateDirectory(uploadsPath); // ensure it exists even on first run
+/* var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "shared-uploads");
+Directory.CreateDirectory(uploadsPath); */ // ensure it exists even on first run
 
 /* app.UseStaticFiles(new StaticFileOptions
 {
