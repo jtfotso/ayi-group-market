@@ -3,6 +3,8 @@
 @inject ISender Sender
 @using AYIGroupMarket.Application.Features.Admin.GetCustomers
 @using AYIGroupMarket.Application.Features.Admin.GetCustomerDetail
+@using AYIGroupMarket.Application.Features.Admin.ManageUserRoles
+@using AYIGroupMarket.Application.Features.Admin.GetUserRoles
 
 <PageTitle>Admin — Customers</PageTitle>
 
@@ -62,6 +64,25 @@
                         <p><strong>Wholesale:</strong> @selectedCustomer.WholesaleCompanyName (@selectedCustomer.WholesaleStatus)</p>
                     }
 
+                    <h6 class="mt-3">Roles</h6>
+                    @if (allRoles is not null && userRoles is not null)
+                    {
+                        @foreach (var role in allRoles)
+                        {
+                            var isChecked = userRoles.Contains(role);
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" checked="@isChecked"
+                                    @onchange="@(e => ToggleRole(selectedCustomer!.Id, role, (bool)e.Value!))" />
+                                <label class="form-check-label">@role</label>
+                            </div>
+                        }
+                    }
+
+                    <hr />
+                    <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteAccount(selectedCustomer!.Id)">
+                        Delete Account
+                    </button>
+                    
                     <h6 class="mt-3">Order History</h6>
                     @if (!selectedCustomer.Orders.Any())
                     {
@@ -79,7 +100,9 @@
                             </tbody>
                         </table>
                     }
+                    
                 </div>
+
             </div>
         </div>
     </div>
@@ -89,11 +112,16 @@
     private List<AYIGroupMarket.Application.DTOs.AdminCustomerListItemDto>? customers;
     private AYIGroupMarket.Application.DTOs.AdminCustomerDetailDto? selectedCustomer;
     private string searchTerm = "";
-
+    private List<string>? allRoles;
+    private List<string>? userRoles;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    private string? currentAdminUserId;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            currentAdminUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             await Load();
             StateHasChanged();
         }
@@ -109,6 +137,8 @@
     private async Task ViewDetail(string userId)
     {
         selectedCustomer = await Sender.Send(new GetCustomerDetailQuery(userId));
+        allRoles = await Sender.Send(new GetAllRolesQuery());
+        userRoles = await Sender.Send(new GetUserRolesQuery(userId));
     }
 
     private string WholesaleBadgeClass(string? status) => status switch
@@ -118,4 +148,23 @@
         "Suspended" => "bg-warning text-dark",
         _ => "bg-secondary"
     };
+
+    private async Task ToggleRole(string userId, string role, bool grant)
+    {
+        if (userId == currentAdminUserId && role == "Admin" && !grant)
+        {
+            return;
+        }
+        await Sender.Send(new SetUserRoleCommand(userId, role, grant));
+        userRoles = await Sender.Send(new GetUserRolesQuery(userId));
+    }
+
+    private async Task DeleteAccount(string userId)
+    {
+        if (userId == currentAdminUserId) return;
+        await Sender.Send(new DeleteUserCommand(userId));
+        selectedCustomer = null;
+        await Load();
+    }
+
 }

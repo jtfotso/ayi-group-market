@@ -32,4 +32,6 @@ public interface IApplicationDbContext
     Task<int> GetTotalUserCountAsync(CancellationToken cancellationToken = default);
     Task<List<CustomerSummary>> GetCustomerSummariesAsync(string? searchTerm, CancellationToken cancellationToken = default);
     Task<CustomerSummary?> GetCustomerSummaryAsync(string userId, CancellationToken cancellationToken = default);
+    Task<List<string>> GetUserRolesAsync(string userId, CancellationToken cancellationToken = default);
+    Task<List<string>> GetAllRoleNamesAsync(CancellationToken cancellationToken = default);
 }

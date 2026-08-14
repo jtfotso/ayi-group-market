@@ -68,4 +68,18 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
         var user = await Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         return user is null ? null : new Application.Abstractions.CustomerSummary(user.Id, user.Email ?? "", user.FirstName, user.LastName, user.CreatedAt);
     }
+
+    public async Task<List<string>> GetUserRolesAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        return await (from ur in UserRoles
+                    join r in Roles on ur.RoleId equals r.Id
+                    where ur.UserId == userId
+                    select r.Name!)
+                    .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<string>> GetAllRoleNamesAsync(CancellationToken cancellationToken = default)
+    {
+        return await Roles.Select(r => r.Name!).ToListAsync(cancellationToken);
+    }
 }

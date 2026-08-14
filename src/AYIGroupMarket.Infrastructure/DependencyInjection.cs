@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IWholesaleCatalogGenerator, Pdf.WholesaleCatalogGenerator>();
         services.AddScoped<INotificationService, Services.NotificationService>();
         services.AddScoped<IFileStorageService, Storage.AzureBlobFileStorageService>();
+        services.AddScoped<IUserRoleManager, Identity.UserRoleManager>();
         //services.AddScoped<IFileStorageService, Storage.LocalFileStorageService>();
         
         return services;
