@@ -1,0 +1,46 @@
+@page "/commande/paypal-return"
+@inject ISender Sender
+@inject NavigationManager Nav
+@using AYIGroupMarket.Application.Features.Payments.VerifyPayment
+
+<div class="container py-5 text-center">
+    @if (isProcessing)
+    {
+        <p>Processing payment...</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+        <a href="/panier" class="btn btn-outline-success">Back to cart</a>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "orderNumber")] public string? OrderNumber { get; set; }
+    [SupplyParameterFromQuery(Name = "token")] public string? PayPalOrderId { get; set; } // PayPal appends this automatically
+
+    private bool isProcessing = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(PayPalOrderId) || string.IsNullOrEmpty(OrderNumber))
+        {
+            errorMessage = "Missing payment information.";
+            isProcessing = false;
+            return;
+        }
+
+        var verified = await Sender.Send(new VerifyPaymentCommand(PayPalOrderId));
+
+        if (verified)
+        {
+            Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
+        }
+        else
+        {
+            errorMessage = "Payment could not be verified. Please contact support.";
+            isProcessing = false;
+        }
+    }
+}

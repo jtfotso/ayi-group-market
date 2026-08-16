@@ -36,7 +36,7 @@ public static class DependencyInjection
         services.AddScoped<Payments.MobileMoneyPaymentGateway>();
         services.AddScoped<Payments.OrangeMoneyPaymentGateway>();
         services.AddScoped<Payments.CardPaymentGateway>();
-        services.AddScoped<Payments.PayPalPaymentGateway>();
+        //services.AddScoped<Payments.PayPalPaymentGateway>();
         services.AddScoped<Payments.WhatsAppManualPaymentGateway>();
         services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
         services.AddScoped<IWholesaleRoleAssigner, Identity.WholesaleRoleAssigner>();
@@ -44,6 +44,8 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, Services.NotificationService>();
         services.AddScoped<IFileStorageService, Storage.AzureBlobFileStorageService>();
         services.AddScoped<IUserRoleManager, Identity.UserRoleManager>();
+        services.Configure<Payments.PayPalOptions>(configuration.GetSection("PayPal"));
+        services.AddHttpClient<Payments.PayPalPaymentGateway>();
         //services.AddScoped<IFileStorageService, Storage.LocalFileStorageService>();
         
         return services;

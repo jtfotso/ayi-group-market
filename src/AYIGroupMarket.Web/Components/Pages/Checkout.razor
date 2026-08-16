@@ -375,15 +375,22 @@
 
             await CartNotifier.NotifyCartChangedAsync();
 
-            if (paymentResult.RedirectUrl is not null)
+            if (paymentResult.Success && paymentResult.RedirectUrl is not null)
             {
                 // Card/PayPal — send the customer to the gateway's hosted checkout
                 Nav.NavigateTo(paymentResult.RedirectUrl, forceLoad: true);
             }
-            else
+            else if (paymentResult.Success)
             {
                 // Mobile Money/Orange Money/WhatsApp — no redirect, straight to confirmation
                 Nav.NavigateTo($"/commande/confirmation/{orderResult.OrderNumber}");
+            }
+            else
+            {
+                errorMessage = IsFr
+                    ? $"Le paiement n'a pas pu être initié: {paymentResult.ErrorMessage}"
+                    : $"Payment could not be initiated: {paymentResult.ErrorMessage}";
+                isSubmitting = false;
             }
         }
         catch (Exception ex)
