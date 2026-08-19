@@ -7,9 +7,10 @@ using Microsoft.Extensions.Options;
 
 namespace AYIGroupMarket.Infrastructure.Payments;
 
-public class PayPalPaymentGateway(HttpClient httpClient, IOptions<PayPalOptions> options) : IPaymentGateway
+public class PayPalPaymentGateway(HttpClient httpClient, IOptions<PayPalOptions> options, IOptions<AppOptions> appOptions) : IPaymentGateway
 {
     private readonly PayPalOptions _options = options.Value;
+    private readonly string _baseUrl = appOptions.Value.BaseUrl;
 
     private async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
@@ -53,8 +54,8 @@ public class PayPalPaymentGateway(HttpClient httpClient, IOptions<PayPalOptions>
                 },
                 application_context = new
                 {
-                    return_url = $"https://ayi-group-market-dev.azurewebsites.net/commande/paypal-return?orderNumber={request.OrderNumber}",
-                    cancel_url = $"https://ayi-group-market-dev.azurewebsites.net/commande/paypal-cancel?orderNumber={request.OrderNumber}"
+                    return_url = $"{_baseUrl}/commande/paypal-return?orderNumber={request.OrderNumber}",
+                    cancel_url = $"{_baseUrl}/commande/paypal-cancel?orderNumber={request.OrderNumber}"
                 }
             };
 

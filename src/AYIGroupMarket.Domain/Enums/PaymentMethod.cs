@@ -2,9 +2,7 @@ namespace AYIGroupMarket.Domain.Enums;
 
 public enum PaymentMethod
 {
-    MobileMoney = 0,
-    OrangeMoney = 1,
-    CreditCard = 2,
-    WhatsAppManual = 3,
-    PayPal = 4
+    PayUnit = 0,       // covers Mobile Money, Orange Money, and card — all via PayUnit's hosted page
+    WhatsAppManual = 1,
+    PayPal = 2
 }

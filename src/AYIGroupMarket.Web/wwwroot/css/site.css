@@ -42,7 +42,7 @@ body {
   background-color: var(--ayi-bg);
   color: var(--ayi-ink);
 }
-
+.payment-icon-payunit { background-color: #16a3a1; } /* PayUnit's teal brand color, from their hosted page */
 /* .site-header .container,
 main .container {
   max-width: 1240px;

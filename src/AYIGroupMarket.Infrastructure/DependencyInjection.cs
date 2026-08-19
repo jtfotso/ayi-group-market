@@ -33,9 +33,9 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOrderNumberGenerator, Services.OrderNumberGenerator>();
-        services.AddScoped<Payments.MobileMoneyPaymentGateway>();
-        services.AddScoped<Payments.OrangeMoneyPaymentGateway>();
-        services.AddScoped<Payments.CardPaymentGateway>();
+        /* services.AddScoped<Payments.MobileMoneyPaymentGateway>();
+        services.AddScoped<Payments.OrangeMoneyPaymentGateway>(); */
+        //services.AddScoped<Payments.CardPaymentGateway>();
         //services.AddScoped<Payments.PayPalPaymentGateway>();
         services.AddScoped<Payments.WhatsAppManualPaymentGateway>();
         services.AddScoped<IPaymentGatewayResolver, Payments.PaymentGatewayResolver>();
@@ -46,6 +46,9 @@ public static class DependencyInjection
         services.AddScoped<IUserRoleManager, Identity.UserRoleManager>();
         services.Configure<Payments.PayPalOptions>(configuration.GetSection("PayPal"));
         services.AddHttpClient<Payments.PayPalPaymentGateway>();
+        services.Configure<AppOptions>(configuration.GetSection("App"));
+        services.Configure<Payments.PayUnitOptions>(configuration.GetSection("PayUnit"));
+        services.AddHttpClient<Payments.PayUnitPaymentGateway>();
         //services.AddScoped<IFileStorageService, Storage.LocalFileStorageService>();
         
         return services;

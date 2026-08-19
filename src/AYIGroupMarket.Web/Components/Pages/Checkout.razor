@@ -257,7 +257,7 @@
     private string promoCode = "";
     private string? promoErrorMessage;
     private decimal appliedDiscount = 0;
-    private PaymentMethod selectedPaymentMethod = PaymentMethod.MobileMoney;
+    private PaymentMethod selectedPaymentMethod = PaymentMethod.PayUnit; // Default to PayUnit, which covers Mobile Money, Orange Money, and card payments
 
     private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
 
@@ -304,18 +304,15 @@
 
     private string PaymentMethodLabel(PaymentMethod method) => method switch
     {
-        PaymentMethod.MobileMoney => "Mobile Money",
-        PaymentMethod.OrangeMoney => "Orange Money",
-        PaymentMethod.CreditCard => IsFr ? "Carte bancaire" : "Credit Card",
+        PaymentMethod.PayUnit => IsFr ? "Mobile Money, Orange Money ou Carte bancaire" : "Mobile Money, Orange Money, or Card",
         PaymentMethod.WhatsAppManual => IsFr ? "Commande manuelle WhatsApp" : "WhatsApp manual order",
-        _ => method.ToString() // fallback covers PayPal or any future addition automatically
+        PaymentMethod.PayPal => "PayPal",
+        _ => method.ToString()
     };
 
     private string PaymentMethodIcon(PaymentMethod method) => method switch
     {
-        PaymentMethod.MobileMoney => "bi-phone-fill",
-        PaymentMethod.OrangeMoney => "bi-phone-fill",
-        PaymentMethod.CreditCard => "bi-credit-card-fill",
+        PaymentMethod.PayUnit => "bi-wallet2",
         PaymentMethod.PayPal => "bi-paypal",
         PaymentMethod.WhatsAppManual => "bi-whatsapp",
         _ => "bi-wallet2"
@@ -323,9 +320,7 @@
 
     private string PaymentMethodIconClass(PaymentMethod method) => method switch
     {
-        PaymentMethod.MobileMoney => "payment-icon-mtn",
-        PaymentMethod.OrangeMoney => "payment-icon-orange",
-        PaymentMethod.CreditCard => "payment-icon-card",
+        PaymentMethod.PayUnit => "payment-icon-payunit",
         PaymentMethod.PayPal => "payment-icon-paypal",
         PaymentMethod.WhatsAppManual => "payment-icon-whatsapp",
         _ => ""

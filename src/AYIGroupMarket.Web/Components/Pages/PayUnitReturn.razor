@@ -1,0 +1,46 @@
+@page "/commande/payunit-return"
+@inject ISender Sender
+@inject NavigationManager Nav
+@using AYIGroupMarket.Application.Features.Payments.VerifyPayment
+
+<div class="container py-5 text-center">
+    @if (isProcessing)
+    {
+        <p>Vérification du paiement...</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+        <a href="/panier" class="btn btn-outline-success">Retour au panier</a>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "orderNumber")] public string? OrderNumber { get; set; }
+
+    private bool isProcessing = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(OrderNumber))
+        {
+            errorMessage = "Informations de commande manquantes.";
+            isProcessing = false;
+            return;
+        }
+
+        // We use the order number itself as the PayUnit transaction reference — see PayUnitPaymentGateway
+        var verified = await Sender.Send(new VerifyPaymentCommand(OrderNumber));
+
+        if (verified)
+        {
+            Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
+        }
+        else
+        {
+            errorMessage = "Le paiement n'a pas pu être confirmé. Il est peut-être encore en attente — veuillez réessayer dans quelques instants ou contacter le support.";
+            isProcessing = false;
+        }
+    }
+}
