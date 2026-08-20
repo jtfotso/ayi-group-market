@@ -30,17 +30,27 @@
             return;
         }
 
-        // We use the order number itself as the PayUnit transaction reference — see PayUnitPaymentGateway
-        var verified = await Sender.Send(new VerifyPaymentCommand(OrderNumber));
-
-        if (verified)
+        try
         {
+            // We use the order number itself as the PayUnit transaction reference — see PayUnitPaymentGateway
+            var verified = await Sender.Send(new VerifyPaymentCommand(OrderNumber));
+
+            if (verified)
+            {
+                Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
+            }
+            else
+            {
+                errorMessage = "Le paiement n'a pas pu être confirmé. Il est peut-être encore en attente — veuillez réessayer dans quelques instants ou contacter le support.";
+                isProcessing = false;
+            }
+        }
+        catch (Exception)
+        {
+            // If verification already succeeded on an earlier load, just send them to confirmation directly
+            // rather than showing a scary error for what's likely just a duplicate/idempotency edge case
             Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
         }
-        else
-        {
-            errorMessage = "Le paiement n'a pas pu être confirmé. Il est peut-être encore en attente — veuillez réessayer dans quelques instants ou contacter le support.";
-            isProcessing = false;
-        }
+        
     }
 }

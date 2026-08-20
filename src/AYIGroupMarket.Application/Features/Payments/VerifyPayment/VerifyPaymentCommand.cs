@@ -16,6 +16,10 @@ public class VerifyPaymentCommandHandler(IApplicationDbContext db, IPaymentGatew
             .FirstOrDefaultAsync(p => p.TransactionReference == request.TransactionReference, cancellationToken)
             ?? throw new KeyNotFoundException("Payment not found for this transaction reference");
 
+        // Already verified successfully — don't re-call the gateway or re-process, just confirm success
+        if (payment.Status == PaymentStatus.Successful)
+            return true;
+
         var gateway = gatewayResolver.Resolve(payment.Method);
 
         // This calls the gateway's OWN verification API — never trusts the webhook payload alone
