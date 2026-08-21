@@ -4,6 +4,8 @@ public record ShippingRateDto(
     Guid Id,
     string DeliveryMethod,
     string DeliveryMethodEn,
+    bool IsPickup,
+    int DeliveryDays,
     decimal BaseFee,
     decimal? FeePerKg,
     decimal? FreeShippingThreshold);
@@ -18,9 +20,9 @@ public record CreateAddressRequest(
     string FullName,
     string Phone,
     string Email,
-    string AddressLine,
-    string City,
-    Guid ShippingZoneId);
+    string? AddressLine,
+    string? City,
+    Guid? ShippingZoneId);
 
 public record OrderItemDto(
     string ProductName,

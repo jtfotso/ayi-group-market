@@ -21,7 +21,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasOne(o => o.Address)
             .WithMany()
             .HasForeignKey(o => o.AddressId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasOne(o => o.ShippingRate)
             .WithMany()

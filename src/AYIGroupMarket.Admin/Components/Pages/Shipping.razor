@@ -1,0 +1,95 @@
+@page "/shipping"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@inject AppDbContext Db
+@using AYIGroupMarket.Domain.Entities
+@using Microsoft.EntityFrameworkCore
+@using AYIGroupMarket.Infrastructure.Persistence
+<PageTitle>Admin — Shipping</PageTitle>
+
+<div class="container py-4">
+    <h1>Shipping Rates</h1>
+
+    <table class="table">
+        <thead><tr><th>Zone</th><th>Method</th><th>Pickup?</th><th>Fee</th><th>Delivery Days</th><th>Active</th><th></th></tr></thead>
+        <tbody>
+            @if (rates is not null)
+            {
+                @foreach (var r in rates)
+                {
+                    <tr>
+                        <td>@(r.ShippingZone?.Name ?? "—")</td>
+                        <td>@r.DeliveryMethod</td>
+                        <td>@(r.IsPickup ? "Yes" : "No")</td>
+                        <td>
+                            <input type="number" step="0.01" class="form-control form-control-sm" style="width:120px;"
+                                   value="@r.BaseFee" @onchange="@(e => UpdateFee(r.Id, e.Value))" />
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" style="width:80px;"
+                                   value="@r.DeliveryDays" @onchange="@(e => UpdateDeliveryDays(r.Id, e.Value))" />
+                        </td>
+                        <td>
+                            <input type="checkbox" checked="@r.IsActive" @onchange="@(e => UpdateActive(r.Id, (bool)e.Value!))" />
+                        </td>
+                        <td><button class="btn btn-sm btn-success" @onclick="() => Save(r.Id)">Save</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<ShippingRate>? rates;
+    private Dictionary<Guid, ShippingRate> pendingChanges = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        rates = await Db.ShippingRates
+        .Include(r => r.ShippingZone)
+        .OrderByDescending(r => r.IsPickup)
+        .ThenBy(r => r.ShippingZone!.Name)
+        .ToListAsync();
+    }
+
+    private void UpdateFee(Guid id, object? value)
+    {
+        if (value is string s && decimal.TryParse(s, out var fee))
+        {
+            var rate = rates!.First(r => r.Id == id);
+            rate.BaseFee = fee;
+        }
+    }
+
+    private void UpdateDeliveryDays(Guid id, object? value)
+    {
+        if (value is string s && int.TryParse(s, out var days))
+        {
+            var rate = rates!.First(r => r.Id == id);
+            rate.DeliveryDays = days;
+        }
+    }
+
+    private void UpdateActive(Guid id, bool active)
+    {
+        var rate = rates!.First(r => r.Id == id);
+        rate.IsActive = active;
+    }
+
+    private async Task Save(Guid id)
+    {
+        var rate = rates!.First(r => r.Id == id);
+        Db.ShippingRates.Update(rate);
+        await Db.SaveChangesAsync();
+        await Load();
+    }
+}

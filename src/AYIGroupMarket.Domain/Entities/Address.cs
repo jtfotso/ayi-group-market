@@ -12,6 +12,6 @@ public class Address : BaseEntity
     public string AddressLine { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
 
-    public Guid ShippingZoneId { get; set; } // region
-    public ShippingZone ShippingZone { get; set; } = null!;
+    public Guid? ShippingZoneId { get; set; } // region
+    public ShippingZone? ShippingZone { get; set; } = null!;
 }

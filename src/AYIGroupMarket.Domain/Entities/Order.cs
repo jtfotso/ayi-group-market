@@ -9,14 +9,17 @@ public class Order : BaseEntity
 
     public string OwnerKey { get; set; } = string.Empty; // ties back to the cart owner, same pattern as Cart
 
-    public Guid AddressId { get; set; }
-    public Address Address { get; set; } = null!;
+    public Guid? AddressId { get; set; }
+    public Address? Address { get; set; } = null!;
 
     public Guid ShippingRateId { get; set; }
     public ShippingRate ShippingRate { get; set; } = null!;
 
     public PaymentMethod PaymentMethod { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+    public bool IsPickup { get; set; } = false;
+    public int DeliveryDays { get; set; }
 
     public decimal Subtotal { get; set; }
     public decimal ShippingFee { get; set; }

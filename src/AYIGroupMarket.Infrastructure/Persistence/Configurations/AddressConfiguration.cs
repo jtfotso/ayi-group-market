@@ -17,6 +17,7 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
         builder.HasOne(a => a.ShippingZone)
             .WithMany()
             .HasForeignKey(a => a.ShippingZoneId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

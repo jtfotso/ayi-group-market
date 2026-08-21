@@ -71,6 +71,7 @@
                     <!-- Step 2: Delivery Address -->
                     <div class="bg-ayi-soft rounded-4 p-4">
                         <h2 class="h5 fw-bold mb-3">@(IsFr ? "Adresse de livraison" : "Delivery address")</h2>
+                        <p class="text-secondary small">@(IsFr ? "Uniquement nécessaire si vous choisissez la livraison à l'étape suivante." : "Only needed if you choose delivery in the next step.")</p>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">@(IsFr ? "Adresse" : "Address")</label>
@@ -93,7 +94,7 @@
                         </div>
                         <div class="d-flex gap-2 mt-4">
                             <button class="btn btn-outline-secondary" @onclick="() => GoToStep(1)">@(IsFr ? "Retour" : "Back")</button>
-                            <button class="btn btn-success" @onclick="() => GoToStep(3)" disabled="@(!CanProceedFromStep2())">
+                            <button class="btn btn-success" @onclick="() => GoToStep(3)">
                                 @(IsFr ? "Continuer" : "Continue")
                             </button>
                         </div>
@@ -101,17 +102,42 @@
                 }
                 else if (currentStep == 3)
                 {
-                    <!-- Step 3: Shipping Method -->
                     <div class="bg-ayi-soft rounded-4 p-4">
-                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Méthode de livraison" : "Shipping method")</h2>
+                        <h2 class="h5 fw-bold mb-3">@(IsFr ? "Méthode de livraison" : "Delivery method")</h2>
+
+                        @if (pickupOption is not null)
+                        {
+                            <div class="form-check p-3 border rounded-3 mb-2 bg-white">
+                                <input class="form-check-input" type="radio" name="shippingRate"
+                                    checked="@(selectedRateId == pickupOption.Id.ToString())"
+                                    @onchange="() => SelectPickup()" />
+                                <label class="form-check-label d-flex justify-content-between w-100">
+                                    <span>
+                                        @(IsFr ? pickupOption.DeliveryMethod : pickupOption.DeliveryMethodEn)
+                                        <br /><small class="text-secondary">@(IsFr ? "Gratuit — récupérez votre commande en magasin" : "Free — pick up your order in store")</small>
+                                    </span>
+                                    <span class="fw-bold">0 FCFA</span>
+                                </label>
+                            </div>
+                        }
+
+                        <div class="mb-2 mt-3"><strong>@(IsFr ? "Ou faites-vous livrer :" : "Or get it delivered:")</strong></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">@(IsFr ? "Région" : "Region")</label>
+                            <select class="form-select" @bind="selectedZoneId" @bind:after="OnZoneChanged">
+                                <option value="">-- @(IsFr ? "Choisir" : "Select") --</option>
+                                @foreach (var zone in zones)
+                                {
+                                    <option value="@zone.Id">@(IsFr ? zone.Name : zone.NameEn)</option>
+                                }
+                            </select>
+                        </div>
+
                         @{
                             var selectedZone = zones.FirstOrDefault(z => z.Id.ToString() == selectedZoneId);
                         }
-                        @if (selectedZone is null || selectedZone.Rates.Count == 0)
-                        {
-                            <p class="text-secondary">@(IsFr ? "Aucune méthode de livraison disponible pour cette région." : "No shipping method available for this region.")</p>
-                        }
-                        else
+                        @if (selectedZone is not null)
                         {
                             @foreach (var rate in selectedZone.Rates)
                             {
@@ -120,15 +146,19 @@
 
                                 <div class="form-check p-3 border rounded-3 mb-2 bg-white">
                                     <input class="form-check-input" type="radio" name="shippingRate"
-                                           checked="@(selectedRateId == rate.Id.ToString())"
-                                           @onchange="() => selectedRateId = rate.Id.ToString()" />
+                                        checked="@(selectedRateId == rate.Id.ToString() && !isPickupSelected)"
+                                        @onchange="() => SelectDelivery(rate.Id)" />
                                     <label class="form-check-label d-flex justify-content-between w-100">
-                                        <span>@(IsFr ? rate.DeliveryMethod : rate.DeliveryMethodEn)</span>
+                                        <span>
+                                            @(IsFr ? rate.DeliveryMethod : rate.DeliveryMethodEn)
+                                            <br /><small class="text-secondary">@(IsFr ? $"Livraison sous {rate.DeliveryDays} jours" : $"Delivery within {rate.DeliveryDays} days")</small>
+                                        </span>
                                         <span class="fw-bold">@fee.ToString("C")</span>
                                     </label>
                                 </div>
                             }
                         }
+
                         <div class="d-flex gap-2 mt-4">
                             <button class="btn btn-outline-secondary" @onclick="() => GoToStep(2)">@(IsFr ? "Retour" : "Back")</button>
                             <button class="btn btn-success" @onclick="() => GoToStep(4)" disabled="@string.IsNullOrEmpty(selectedRateId)">
@@ -246,7 +276,8 @@
     private int currentStep = 1;
     private bool isSubmitting = false;
     private string? errorMessage;
-
+    private AYIGroupMarket.Application.DTOs.ShippingRateDto? pickupOption;
+    private bool isPickupSelected = false;
     private string fullName = "";
     private string phone = "";
     private string email = "";
@@ -266,6 +297,9 @@
         get
         {
             if (zones is null || string.IsNullOrEmpty(selectedRateId)) return null;
+
+            if (isPickupSelected) return 0m;
+
             var rate = zones.SelectMany(z => z.Rates).FirstOrDefault(r => r.Id.ToString() == selectedRateId);
             if (rate is null) return null;
             return rate.FreeShippingThreshold.HasValue && cart!.Total >= rate.FreeShippingThreshold.Value
@@ -280,6 +314,7 @@
             var ownerKey = await CartSession.GetOwnerKeyAsync();
             cart = await Sender.Send(new GetCartQuery(ownerKey));
             zones = await Sender.Send(new GetShippingZonesQuery());
+            pickupOption = await Sender.Send(new AYIGroupMarket.Application.Features.Shipping.GetPickupOption.GetPickupOptionQuery());
             StateHasChanged();
         }
     }
@@ -288,10 +323,7 @@
 
     private bool CanProceedFromStep1() =>
         !string.IsNullOrWhiteSpace(fullName) && !string.IsNullOrWhiteSpace(phone);
-
-    private bool CanProceedFromStep2() =>
-        !string.IsNullOrWhiteSpace(addressLine) && !string.IsNullOrWhiteSpace(city) && !string.IsNullOrEmpty(selectedZoneId);
-
+    
     private string StepLabel(int step) => step switch
     {
         1 => IsFr ? "Informations" : "Information",
@@ -359,7 +391,7 @@
 
             var orderResult = await Sender.Send(new CreateOrderCommand(
                 ownerKey,
-                new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.Parse(selectedZoneId)),
+                isPickupSelected ? null :new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.TryParse(selectedZoneId, out var zid) ? zid : null),
                 Guid.Parse(selectedRateId),
                 selectedPaymentMethod,
                 null, // Notes
@@ -396,4 +428,24 @@
             isSubmitting = false;
         }
     }
+
+    private void SelectPickup()
+    {
+        isPickupSelected = true;
+        selectedRateId = pickupOption!.Id.ToString();
+    }
+
+    private void SelectDelivery(Guid rateId)
+    {
+        isPickupSelected = false;
+        selectedRateId = rateId.ToString();
+    }
+
+    private void OnZoneChanged()
+    {
+        // reset rate selection when region changes, since previously selected rate belonged to a different zone
+        if (!isPickupSelected)
+            selectedRateId = "";
+    }
+
 }

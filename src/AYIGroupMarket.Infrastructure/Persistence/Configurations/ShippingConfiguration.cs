@@ -14,7 +14,8 @@ public class ShippingZoneConfiguration : IEntityTypeConfiguration<ShippingZone>
         builder.HasMany(z => z.Rates)
             .WithOne(r => r.ShippingZone)
             .HasForeignKey(r => r.ShippingZoneId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }
 

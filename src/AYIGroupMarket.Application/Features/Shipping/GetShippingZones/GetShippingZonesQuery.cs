@@ -17,7 +17,8 @@ public class GetShippingZonesQueryHandler(IApplicationDbContext db)
             .Select(z => new ShippingZoneDto(
                 z.Id, z.Name, z.NameEn,
                 z.Rates.Where(r => r.IsActive).Select(r => new ShippingRateDto(
-                    r.Id, r.DeliveryMethod, r.DeliveryMethodEn, r.BaseFee, r.FeePerKg, r.FreeShippingThreshold
+                    r.Id, r.DeliveryMethod, r.DeliveryMethodEn, r.IsPickup, r.DeliveryDays,
+                    r.BaseFee, r.FeePerKg, r.FreeShippingThreshold
                 )).ToList()
             ))
             .ToListAsync(cancellationToken);
