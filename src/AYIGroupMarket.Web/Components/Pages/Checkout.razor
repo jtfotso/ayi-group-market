@@ -138,7 +138,7 @@
 
                         <div class="d-flex gap-2 mt-4">
                             <button class="btn btn-outline-secondary" @onclick="() => GoToStep(1)">@(IsFr ? "Retour" : "Back")</button>
-                            <button class="btn btn-success" @onclick="() => GoToStep(4)" disabled="@(!CanProceedFromFulfillment())">
+                            <button class="btn btn-success" @onclick="() => GoToStep(3)" disabled="@(!CanProceedFromFulfillment())">
                                 @(IsFr ? "Continuer" : "Continue")
                             </button>
                         </div>
