@@ -1,6 +1,7 @@
 @page "/products"
 @attribute [Authorize(Policy = "RequireAdmin")]
 @inject ISender Sender
+@using AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin
 @inject IFileStorageService FileStorage
 @using AYIGroupMarket.Application.Features.Products.GetProducts
 @using AYIGroupMarket.Application.Features.Products.GetProductForEdit
@@ -27,16 +28,16 @@
         <tbody>
             @if (products is not null)
             {
-                @foreach (var p in products.Items)
+                @foreach (var p in products)
                 {
                     <tr>
                         <td>@p.Sku</td>
                         <td>@p.Name</td>
                         <td>@p.CategoryName</td>
                         <td>@p.RetailPrice.ToString("C")</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
+                        <td>@(p.WholesalePrice?.ToString("C") ?? "-")</td>
+                        <td>@p.StockQuantity</td>
+                        <td>@(p.IsActive ? "Yes" : "No")</td>
                         <td>
                             <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditProduct(p.Id)">Edit</button>
                             <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProductAsync(p.Id)">Delete</button>
@@ -122,12 +123,18 @@
                                 <td>@v.RetailPrice.ToString("C")</td>
                                 <td>@(v.WholesalePrice?.ToString("C") ?? "-")</td>
                                 <td>@(v.MinimumWholesaleQuantity?.ToString() ?? "-")</td>
-                                <td><button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteVariant(v.Id)">Delete</button></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditVariant(v)">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteVariant(v.Id)">Delete</button>
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-
+                @if (variantError is not null)
+                {
+                    <div class="alert alert-danger mt-2">@variantError</div>
+                }
                 <div class="row g-2">
                     <div class="col-md-2"><input class="form-control form-control-sm" placeholder="SKU" @bind="variantForm.Sku" /></div>
                     <div class="col-md-2"><input class="form-control form-control-sm" placeholder="Name FR" @bind="variantForm.Name" /></div>
@@ -136,14 +143,23 @@
                     <div class="col-md-2"><input type="number" step="0.01" class="form-control form-control-sm" placeholder="Wholesale" @bind="variantForm.WholesalePrice" /></div>
                     <div class="col-md-2"><input type="number" class="form-control form-control-sm" placeholder="Min qty" @bind="variantForm.MinimumWholesaleQuantity" /></div>
                 </div>
-                <button class="btn btn-sm btn-success mt-2" style="width:fit-content;" @onclick="AddVariant">+ Add Variant</button>
+                <button class="btn btn-sm btn-success mt-2" style="width:fit-content;" @onclick="AddVariant">
+                    @(editingVariantId is null ? "+ Add Variant" : "Update Variant")
+                </button>
+                @if (editingVariantId is not null)
+                {
+                    <button class="btn btn-sm btn-outline-secondary mt-2 ms-2" style="width:fit-content;" @onclick="() => { editingVariantId = null; variantForm = new VariantFormModel(); }">
+                        Cancel
+                    </button>
+                }
             }
         </div>
     }
 </div>
 
 @code {
-    private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? products;
+//    private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? products;
+    private List<AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin.AdminProductListItemDto>? products;
     private List<AYIGroupMarket.Application.DTOs.ProductCategoryDto>? categories;
     private Guid? editingId;
     private bool showForm = false;
@@ -152,6 +168,8 @@
     private List<ProductEditImageDto> images = new();
     private List<ProductEditVariantDto> variants = new();
     private string? saveError;
+    private string? variantError;
+    private Guid? editingVariantId;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -164,7 +182,7 @@
 
     private async Task Load()
     {
-        products = await Sender.Send(new GetProductsQuery(PageSize: 200));
+        products = await Sender.Send(new AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin.GetProductsForAdminQuery());
     }
 
     private void NewProduct()
@@ -288,16 +306,49 @@
 
     private async Task AddVariant()
     {
+        variantError = null;
+
         if (editingId is null) return;
 
-        await Sender.Send(new UpsertVariantCommand(
-            null, editingId.Value, variantForm.Sku, variantForm.Name, variantForm.NameEn,
-            variantForm.RetailPrice, variantForm.WholesalePrice, variantForm.MinimumWholesaleQuantity));
+        if (string.IsNullOrWhiteSpace(variantForm.Sku))
+        {
+            variantError = "SKU is required.";
+            return;
+        }
 
-        variantForm = new VariantFormModel();
-        await RefreshEditingProduct();
+        if (string.IsNullOrWhiteSpace(variantForm.Name))
+        {
+            variantError = "Name (FR) is required.";
+            return;
+        }
+
+        try
+        {
+            await Sender.Send(new UpsertVariantCommand(
+                editingVariantId, editingId.Value, variantForm.Sku, variantForm.Name, variantForm.NameEn,
+                variantForm.RetailPrice, variantForm.WholesalePrice, variantForm.MinimumWholesaleQuantity));
+
+            editingVariantId = null;
+            variantForm = new VariantFormModel();
+            await RefreshEditingProduct();
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            variantError = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
+        
     }
 
+    private void EditVariant(ProductEditVariantDto v)
+    {
+        editingVariantId = v.Id;
+        variantForm = new VariantFormModel
+        {
+            Sku = v.Sku, Name = v.Name, NameEn = v.NameEn,
+            RetailPrice = v.RetailPrice, WholesalePrice = v.WholesalePrice,
+            MinimumWholesaleQuantity = v.MinimumWholesaleQuantity
+        };
+    }
     private async Task DeleteVariant(Guid variantId)
     {
         await Sender.Send(new DeleteVariantCommand(variantId));

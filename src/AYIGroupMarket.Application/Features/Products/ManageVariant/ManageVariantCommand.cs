@@ -3,6 +3,7 @@ using AYIGroupMarket.Domain.Entities;
 using AYIGroupMarket.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace AYIGroupMarket.Application.Features.Products.ManageVariant;
 
@@ -86,5 +87,16 @@ public class DeleteVariantCommandHandler(IApplicationDbContext db) : IRequestHan
 
         db.ProductVariants.Remove(variant); // cascades to ProductPrices via the configured delete behavior
         await db.SaveChangesAsync(cancellationToken);
+    }
+}
+
+public class UpsertVariantCommandValidator : AbstractValidator<UpsertVariantCommand>
+{
+    public UpsertVariantCommandValidator()
+    {
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.Sku).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.RetailPrice).GreaterThanOrEqualTo(0);
     }
 }
