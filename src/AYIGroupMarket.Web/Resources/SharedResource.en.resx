@@ -43,7 +43,7 @@
 
   <!-- Trust section -->
   <data name="TrustEyebrow" xml:space="preserve"><value>Trust</value></data>
-  <data name="TrustH2" xml:space="preserve"><value>Why choose AYI GROUP?</value></data>
+  <data name="TrustH2" xml:space="preserve"><value>Why choose AYI GROUP Market?</value></data>
   <data name="TrustP" xml:space="preserve"><value>A supply chain built for individual customers and wholesalers alike.</value></data>
   <data name="Trust1" xml:space="preserve"><value>Authentic products</value></data>
   <data name="Trust2" xml:space="preserve"><value>Wholesale prices</value></data>

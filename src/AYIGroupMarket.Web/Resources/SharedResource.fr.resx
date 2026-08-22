@@ -43,7 +43,7 @@
 
   <!-- Trust section -->
   <data name="TrustEyebrow" xml:space="preserve"><value>Confiance</value></data>
-  <data name="TrustH2" xml:space="preserve"><value>Pourquoi choisir AYI GROUP ?</value></data>
+  <data name="TrustH2" xml:space="preserve"><value>Pourquoi choisir AYI GROUP Market ?</value></data>
   <data name="TrustP" xml:space="preserve"><value>Une chaîne d'approvisionnement pensée pour les particuliers comme pour les grossistes.</value></data>
   <data name="Trust1" xml:space="preserve"><value>Produits authentiques</value></data>
   <data name="Trust2" xml:space="preserve"><value>Prix grossiste</value></data>
