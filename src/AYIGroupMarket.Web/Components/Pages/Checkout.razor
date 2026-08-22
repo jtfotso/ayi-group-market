@@ -177,7 +177,14 @@
                         <p class="small text-secondary">@fullName — @phone @(string.IsNullOrEmpty(email) ? "" : $"— {email}")</p>
 
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Livraison" : "Delivery")</h3>
-                        <p class="small text-secondary">@addressLine, @city</p>
+                        @if (fulfillmentChoice == "pickup")
+                        {
+                            <p class="small text-secondary">@(IsFr ? "Retrait en magasin" : "Store pickup")</p>
+                        }
+                        else
+                        {
+                            <p class="small text-secondary">@addressLine, @city</p>
+                        }
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Code promo" : "Promo code")</h3>
                         <div class="d-flex gap-2 mb-2">
                             <input class="form-control" style="max-width:200px;" placeholder="@(IsFr ? "Code" : "Code")" @bind="promoCode" />
@@ -396,11 +403,12 @@
                 isSubmitting = false;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             errorMessage = IsFr
                 ? "Une erreur est survenue. Veuillez réessayer."
                 : "Something went wrong. Please try again.";
+
             isSubmitting = false;
         }
     }

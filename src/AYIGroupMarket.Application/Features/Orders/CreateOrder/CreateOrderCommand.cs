@@ -24,11 +24,15 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     {
         RuleFor(x => x.OwnerKey).NotEmpty();
         RuleFor(x => x.ShippingRateId).NotEmpty();
-        RuleFor(x => x.Address.FullName).NotEmpty().MaximumLength(150);
-        RuleFor(x => x.Address.Phone).NotEmpty().MaximumLength(30);
-        RuleFor(x => x.Address.AddressLine).NotEmpty().MaximumLength(300);
-        RuleFor(x => x.Address.City).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Address.ShippingZoneId).NotEmpty();
+        
+        When(x => x.Address is not null, () =>
+        {
+            RuleFor(x => x.Address!.FullName).NotEmpty().MaximumLength(150);
+            RuleFor(x => x.Address!.Phone).NotEmpty().MaximumLength(30);
+            RuleFor(x => x.Address!.AddressLine).NotEmpty().MaximumLength(300);
+            RuleFor(x => x.Address!.City).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.Address!.ShippingZoneId).NotEmpty();
+        });
     }
 }
 
