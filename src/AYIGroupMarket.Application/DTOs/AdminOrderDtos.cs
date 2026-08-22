@@ -17,6 +17,7 @@ public record AdminOrderDetailDto(
     string PaymentMethod,
     string? TrackingNumber,
     string? Notes,
+    DateTime? CustomerConfirmedAt,
     decimal Subtotal,
     decimal ShippingFee,
     decimal Total,

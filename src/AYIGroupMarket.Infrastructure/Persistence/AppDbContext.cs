@@ -34,6 +34,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // required — configures Identity's own tables
@@ -82,4 +84,5 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
         return await Roles.Select(r => r.Name!).ToListAsync(cancellationToken);
     }
+
 }

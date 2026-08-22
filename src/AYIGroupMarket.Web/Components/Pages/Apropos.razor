@@ -1,6 +1,30 @@
 @page "/apropos"
+@using System.Globalization
+
 <PageTitle>À propos — AYI GROUP MARKET</PageTitle>
-<div class="container py-5">
-    <h1>À propos</h1>
-    <p class="text-secondary">Coming soon.</p>
+
+<section class="py-5 bg-ayi-soft border-bottom">
+    <div class="container">
+        <span class="text-ayi-eyebrow">@(IsFr ? "À propos" : "About")</span>
+        <h1 class="fw-bold mt-2 mb-3">AYI GROUP MARKET</h1>
+    </div>
+</section>
+
+<div class="container py-5" style="max-width: 800px;">
+    @if (IsFr)
+    {
+        <p class="fs-5 text-secondary">
+            AYI GROUP MARKET est une plateforme de distribution spécialisée dans la commercialisation de produits alimentaires naturels, de parfums et d'accessoires de qualité. Notre objectif est de rendre accessibles des produits fiables aux particuliers comme aux distributeurs partout au Cameroun.
+        </p>
+    }
+    else
+    {
+        <p class="fs-5 text-secondary">
+            AYI GROUP MARKET is a distribution platform specializing in the sale of natural food products, fragrances, and quality accessories. Our goal is to make reliable products accessible to individuals and distributors alike, all across Cameroon.
+        </p>
+    }
 </div>
+
+@code {
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+}

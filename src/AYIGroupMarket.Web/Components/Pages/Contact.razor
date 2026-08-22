@@ -1,6 +1,112 @@
 @page "/contact"
+@inject ISender Sender
+@using AYIGroupMarket.Application.Features.Contact.SubmitContactMessage
+@using System.Globalization
+
 <PageTitle>Contact — AYI GROUP MARKET</PageTitle>
+
+<section class="py-5 bg-ayi-soft border-bottom">
+    <div class="container">
+        <span class="text-ayi-eyebrow">Contact</span>
+        <h1 class="fw-bold mt-2 mb-3">@(IsFr ? "Contactez-nous" : "Contact us")</h1>
+    </div>
+</section>
+
 <div class="container py-5">
-    <h1>Contact</h1>
-    <p class="text-secondary">Coming soon.</p>
+    <div class="row g-5">
+        <div class="col-lg-5">
+            <h2 class="h5 fw-bold mb-3">AYI GROUP MARKET</h2>
+            <p class="mb-1"><i class="bi bi-geo-alt"></i> Zone MAGZI Douala-Bassa</p>
+            <p class="mb-3">BP 7789</p>
+
+            <p class="mb-1"><i class="bi bi-whatsapp"></i> WhatsApp: 695 16 20 19</p>
+            <a href="@AYIGroupMarket.Web.Services.WhatsAppLinkBuilder.BuildGenericLink(IsFr)" class="btn btn-outline-success mt-2 mb-4" target="_blank">
+                @(IsFr ? "Discuter sur WhatsApp" : "Chat on WhatsApp")
+            </a>
+
+            <p class="text-secondary">@(IsFr ? "Livraison nationale." : "Nationwide delivery.")</p>
+
+            <div class="ratio ratio-4x3 rounded-4 overflow-hidden mt-4">
+                <iframe
+                    src="https://www.google.com/maps?q=Zone+MAGZI+Douala-Bassa,+Douala,+Cameroon&output=embed"
+                    style="border:0;" allowfullscreen loading="lazy">
+                </iframe>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <h2 class="h5 fw-bold mb-3">@(IsFr ? "Envoyez-nous un message" : "Send us a message")</h2>
+
+            @if (submitted)
+            {
+                <div class="alert alert-success">@(IsFr ? "Merci ! Votre message a été envoyé." : "Thank you! Your message has been sent.")</div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@(IsFr ? "Nom" : "Name")</label>
+                        <input class="form-control" @bind="name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" @bind="email" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(IsFr ? "Téléphone" : "Phone")</label>
+                        <input class="form-control" @bind="phone" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(IsFr ? "Sujet" : "Subject")</label>
+                        <input class="form-control" @bind="subject" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" rows="5" @bind="message"></textarea>
+                    </div>
+                </div>
+
+                @if (errorMessage is not null)
+                {
+                    <div class="alert alert-danger mt-3">@errorMessage</div>
+                }
+
+                <button class="btn btn-success mt-4" @onclick="Submit" disabled="@isSubmitting">
+                    @(isSubmitting ? (IsFr ? "Envoi..." : "Sending...") : (IsFr ? "Envoyer" : "Send"))
+                </button>
+            }
+        </div>
+    </div>
 </div>
+
+@code {
+    private string name = "", email = "", phone = "", subject = "", message = "";
+    private bool isSubmitting = false;
+    private bool submitted = false;
+    private string? errorMessage;
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    private async Task Submit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await Sender.Send(new SubmitContactMessageCommand(name, email, string.IsNullOrWhiteSpace(phone) ? null : phone, subject, message));
+            submitted = true;
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            errorMessage = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage));
+        }
+        catch (Exception)
+        {
+            errorMessage = IsFr ? "Une erreur est survenue." : "Something went wrong.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

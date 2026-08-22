@@ -2,6 +2,9 @@
 @layout AYIGroupMarket.Web.Components.Layout.AccountLayout
 @attribute [Authorize]
 @inject ISender Sender
+@inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
+@using AYIGroupMarket.Application.Features.Orders.ConfirmOrderReceipt
+@inject ISender Sender
 @inject AuthenticationStateProvider AuthStateProvider
 @using AYIGroupMarket.Application.Features.Orders.GetMyOrders
 @using System.Globalization
@@ -39,6 +42,19 @@ else
                     <span>Total</span>
                     <span>@order.Total.ToString("C")</span>
                 </div>
+
+                @if (order.Status == "Shipped" || order.Status == "ReadyForDelivery")
+                {
+                    <button class="btn btn-success btn-sm mt-2" @onclick="() => ConfirmReceipt(order.Id)">
+                        @(IsFr ? "Confirmer la réception" : "Confirm receipt")
+                    </button>
+                }
+                @if (order.Status == "Delivered")
+                {
+                    <p class="small text-success mt-2 mb-0">
+                        <i class="bi bi-check-circle-fill"></i> @(IsFr ? "Réception confirmée" : "Receipt confirmed")
+                    </p>
+                }
             </div>
         </div>
     }
@@ -58,6 +74,23 @@ else
                 orders = await Sender.Send(new GetMyOrdersQuery($"user:{userId}"));
 
             StateHasChanged();
+        }
+    }
+
+    private async Task ConfirmReceipt(Guid orderId)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId is null) return;
+
+        try
+        {
+            await Sender.Send(new ConfirmOrderReceiptCommand(orderId, $"user:{userId}"));
+            orders = await Sender.Send(new GetMyOrdersQuery($"user:{userId}"));
+        }
+        catch (Exception)
+        {
+            // could surface an error message here if desired; keeping silent-fail simple for now
         }
     }
 }

@@ -8,7 +8,7 @@ public class Order : BaseEntity
     public string OrderNumber { get; set; } = string.Empty; // AYI-2026-000001
 
     public string OwnerKey { get; set; } = string.Empty; // ties back to the cart owner, same pattern as Cart
-
+    public DateTime? CustomerConfirmedAt { get; set; }
     public Guid? AddressId { get; set; }
     public Address? Address { get; set; } = null!;
 

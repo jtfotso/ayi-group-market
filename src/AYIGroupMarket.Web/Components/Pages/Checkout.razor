@@ -199,6 +199,9 @@
                             <div class="alert alert-success py-2">@(IsFr ? "Réduction appliquée" : "Discount applied"): @appliedDiscount.ToString("C")</div>
                         }
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Articles" : "Items")</h3>
+                        <a href="@GetWhatsAppCartLink()" class="btn btn-sm btn-outline-success mt-2" target="_blank">
+                            <i class="bi bi-whatsapp"></i> @(IsFr ? "Commander via WhatsApp à la place" : "Order via WhatsApp instead")
+                        </a>
                         @foreach (var item in cart.Items)
                         {
                             <div class="d-flex justify-content-between small py-1 border-bottom">
@@ -451,4 +454,9 @@
         return false;
     }
 
+    private string GetWhatsAppCartLink()
+    {
+        var items = cart!.Items.Select(i => ((IsFr ? i.ProductName : i.ProductNameEn), i.Quantity)).ToList();
+        return AYIGroupMarket.Web.Services.WhatsAppLinkBuilder.BuildCartLink(IsFr, items);
+    }
 }

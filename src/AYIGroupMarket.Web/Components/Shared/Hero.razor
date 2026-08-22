@@ -1,4 +1,6 @@
 @inject IStringLocalizer<SharedResource> Localizer
+@using AYIGroupMarket.Web.Services
+@using System.Globalization
 
 <section class="bg-ayi-soft border-bottom py-5">
     <div class="container">
@@ -9,7 +11,7 @@
                 <p class="text-secondary mb-4" style="max-width: 480px;">@Localizer["HeroLede"]</p>
                 <div class="d-flex gap-3 flex-wrap mb-4">
                     <a href="/boutique" class="btn btn-success btn-lg">@Localizer["CtaBuyNow"]</a>
-                    <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                    <a href="@WhatsAppLinkBuilder.BuildGenericLink(IsFr)" class="btn btn-outline-success btn-lg" target="_blank">@Localizer["CtaWhatsapp"]</a>
                 </div>
                 <div class="d-flex gap-4 flex-wrap small text-secondary fw-semibold">
                     <span>✓ @Localizer["TrustStrip1"]</span>
@@ -34,3 +36,7 @@
         </div>
     </div>
 </section>
+
+@code {
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+}

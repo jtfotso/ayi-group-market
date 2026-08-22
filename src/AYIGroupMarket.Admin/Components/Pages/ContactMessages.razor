@@ -1,0 +1,57 @@
+@page "/contact-messages"
+@attribute [Authorize(Policy = "RequireAdmin")]
+@using AYIGroupMarket.Infrastructure.Persistence
+@inject AppDbContext Db
+@using AYIGroupMarket.Domain.Entities
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Admin — Contact Messages</PageTitle>
+
+<div class="container py-4">
+    <h1>Contact Messages</h1>
+
+    @if (messages is not null)
+    {
+        @foreach (var m in messages)
+        {
+            <div class="card mb-2 @(m.IsRead ? "" : "border-success")">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <strong>@m.Subject</strong>
+                        @if (!m.IsRead)
+                        {
+                            <button class="btn btn-sm btn-outline-success" @onclick="() => MarkRead(m.Id)">Mark as read</button>
+                        }
+                    </div>
+                    <p class="small text-secondary mb-1">@m.Name — @m.Email @(m.Phone is not null ? $"— {m.Phone}" : "") — @m.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p class="mb-0">@m.Message</p>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<ContactMessage>? messages;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Load()
+    {
+        messages = await Db.ContactMessages.OrderByDescending(m => m.CreatedAt).ToListAsync();
+    }
+
+    private async Task MarkRead(Guid id)
+    {
+        var msg = messages!.First(m => m.Id == id);
+        msg.IsRead = true;
+        await Db.SaveChangesAsync();
+    }
+}

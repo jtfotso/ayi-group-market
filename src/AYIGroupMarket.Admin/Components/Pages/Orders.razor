@@ -75,6 +75,10 @@
                     <button class="btn-close" @onclick="() => selectedOrder = null"></button>
                 </div>
                 <div class="modal-body">
+                    @if (selectedOrder.CustomerConfirmedAt is not null)
+                    {
+                        <p class="text-success"><i class="bi bi-check-circle-fill"></i> Customer confirmed receipt on @selectedOrder.CustomerConfirmedAt.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                    }
                     @if (actionError is not null)
                     {
                         <div class="alert alert-danger">@actionError</div>
@@ -118,6 +122,8 @@
         </div>
     </div>
 }
+
+
 
 @code {
     private PagedResult<AYIGroupMarket.Application.DTOs.AdminOrderListItemDto>? orders;

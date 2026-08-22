@@ -28,6 +28,7 @@ public interface IApplicationDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<InventoryTransaction> InventoryTransactions { get; }
     DbSet<Promotion> Promotions { get; }
+    DbSet<ContactMessage> ContactMessages { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> GetTotalUserCountAsync(CancellationToken cancellationToken = default);
     Task<List<CustomerSummary>> GetCustomerSummariesAsync(string? searchTerm, CancellationToken cancellationToken = default);

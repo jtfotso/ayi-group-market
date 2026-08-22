@@ -122,7 +122,7 @@ else
                     <button class="btn btn-success btn-lg" @onclick="HandleAddToCart" disabled="@isAdding">
                         @(isAdding ? (IsFr ? "Ajout..." : "Adding...") : Localizer["CtaBuyNow"])
                     </button>
-                    <a href="#" class="btn btn-outline-success btn-lg">@Localizer["CtaWhatsapp"]</a>
+                    <a href="@GetWhatsAppProductLink()" class="btn btn-outline-success btn-lg" target="_blank">@Localizer["CtaWhatsapp"]</a>
                 </div>
 
                 @if (addedMessage is not null)
@@ -330,7 +330,7 @@ else
             isSubmittingReview = false;
         }
     }
-        private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
+    private AYIGroupMarket.Application.DTOs.ProductPriceDto? GetSelectedRetailPrice()
         {
             if (product is null || !product.Variants.Any()) return null;
 
@@ -339,7 +339,7 @@ else
 
             return selectedVariant.Prices.FirstOrDefault(p => p.PriceType == priceType)
                 ?? selectedVariant.Prices.FirstOrDefault(p => p.PriceType == "Retail");
-        }
+        }    
 
     private async Task HandleAddToCart()
     {
@@ -365,5 +365,15 @@ else
         {
             isAdding = false;
         }
+    }
+
+    private string GetWhatsAppProductLink()
+    {
+        var variantName = product?.Variants.FirstOrDefault(v => v.Id == selectedVariantId) is { } v
+            ? (IsFr ? v.Name : v.NameEn)
+            : null;
+
+        return AYIGroupMarket.Web.Services.WhatsAppLinkBuilder.BuildProductLink(
+            IsFr, DisplayName, quantity, variantName);
     }
 }
