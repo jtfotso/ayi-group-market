@@ -26,11 +26,15 @@ public class PayUnitPaymentGateway(HttpClient httpClient, IOptions<PayUnitOption
     {
         try
         {
+            // Append a short unique suffix so retries (e.g. after a transient failure) never collide
+            // with a previous attempt's transaction_id on PayUnit's side
+            var payUnitTransactionId = $"{request.OrderNumber}-{DateTime.UtcNow:HHmmss}{Guid.NewGuid().ToString()[..4]}";
+
             var payload = new
             {
-                total_amount = (int)request.Amount, // XAF has no minor unit — whole numbers only
+                total_amount = (int)request.Amount,
                 currency = "XAF",
-                transaction_id = request.OrderNumber,
+                transaction_id = payUnitTransactionId,
                 return_url = $"{_baseUrl}/commande/payunit-return?orderNumber={request.OrderNumber}",
                 notify_url = $"{_baseUrl}/api/webhooks/payments/payunit",
                 payment_country = "CM"
@@ -50,9 +54,8 @@ public class PayUnitPaymentGateway(HttpClient httpClient, IOptions<PayUnitOption
             var data = doc.RootElement.GetProperty("data");
             var transactionUrl = data.GetProperty("transaction_url").GetString();
 
-            // We use OUR OWN transaction_id (the order number) as the reference for status checks later —
-            // simpler and more reliable than trying to parse PayUnit's encrypted t_id value.
-            return new PaymentResultDto(true, request.OrderNumber, transactionUrl, null);
+            // Store PayUnit's own transaction ID (not the order number) as our reference for status checks
+            return new PaymentResultDto(true, payUnitTransactionId, transactionUrl, null);
         }
         catch (Exception ex)
         {

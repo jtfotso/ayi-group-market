@@ -17,13 +17,14 @@
 
 @code {
     [SupplyParameterFromQuery(Name = "orderNumber")] public string? OrderNumber { get; set; }
+    [SupplyParameterFromQuery(Name = "transaction_id")] public string? TransactionId { get; set; }
 
     private bool isProcessing = true;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(OrderNumber))
+        if (string.IsNullOrEmpty(OrderNumber) || string.IsNullOrEmpty(TransactionId))
         {
             errorMessage = "Informations de commande manquantes.";
             isProcessing = false;
@@ -32,8 +33,9 @@
 
         try
         {
-            // We use the order number itself as the PayUnit transaction reference — see PayUnitPaymentGateway
-            var verified = await Sender.Send(new VerifyPaymentCommand(OrderNumber));
+            // TransactionId is PayUnit's own unique transaction reference (from InitiatePaymentAsync),
+            // not the order number — needed to correctly look up the Payment record.
+            var verified = await Sender.Send(new VerifyPaymentCommand(TransactionId));
 
             if (verified)
             {

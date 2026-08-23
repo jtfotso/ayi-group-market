@@ -406,11 +406,13 @@
                 isSubmitting = false;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            errorMessage = IsFr
+            @* errorMessage = IsFr
                 ? "Une erreur est survenue. Veuillez réessayer."
-                : "Something went wrong. Please try again.";
+                : "Something went wrong. Please try again."; *@
+
+            errorMessage = $"{ex.GetType().Name}: {ex.Message}";
 
             isSubmitting = false;
         }
