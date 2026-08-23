@@ -1,4 +1,5 @@
 @page "/boutique/{Slug}"
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @inject ISender Sender
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
 @inject AYIGroupMarket.Web.Services.CartSessionProvider CartSession
@@ -16,10 +17,10 @@
 @using AYIGroupMarket.Application.Features.Cart.AddToCart
 @using System.Globalization
 
-<PageTitle>@(product?.Name ?? "Produit") — AYI GROUP MARKET</PageTitle>
 
 @if (product is null)
 {
+    <PageTitle>@(IsFr ? "Produit introuvable" : "Product not found") — AYI GROUP MARKET</PageTitle>
     <div class="container py-5">
         <p class="text-secondary">@(IsFr ? "Produit introuvable." : "Product not found.")</p>
         <a href="/boutique" class="btn btn-outline-success">@(IsFr ? "Retour à la boutique" : "Back to shop")</a>
@@ -27,6 +28,21 @@
 }
 else
 {
+    <SeoHead Title="@($"{DisplayName} — AYI GROUP MARKET")"
+         Description="@DisplayShortDescriptionForSeo()"
+         CanonicalUrl="@($"{_baseUrl}/boutique/{product.Slug}")"
+         OgType="product"
+         ImageUrl="@(product.ImageUrls.FirstOrDefault())"
+         StructuredDataJson="@_productSchema"
+         AdditionalStructuredData="@_additionalSchema" />
+
+    <nav aria-label="breadcrumb" class="container pt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">@(IsFr ? "Accueil" : "Home")</a></li>
+            <li class="breadcrumb-item"><a href="/boutique">@(IsFr ? "Boutique" : "Shop")</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@DisplayName</li>
+        </ol>
+    </nav>
     <div class="container py-5">
         <div class="row g-5">
             <div class="col-lg-6">
@@ -242,7 +258,9 @@ else
     private Guid? selectedVariantId;
     private ReviewSummaryDto? reviewSummary;
     private bool isFavorited = false;
-
+    private string _baseUrl = "";
+    private string? _productSchema;
+    private List<string>? _additionalSchema;
     private int reviewRating = 5;
     private string reviewTitle = "";
     private string reviewComment = "";
@@ -284,9 +302,40 @@ else
             addedMessage = null;
             errorMessage = null;
             similarProducts = await Sender.Send(new GetProductsQuery(CategoryId: product.CategoryId, PageSize: 8));
+
+            BuildSeoData();
         }
     }
 
+    // call this at the end of OnParametersSetAsync, after reviewSummary and product are both loaded:
+    private void BuildSeoData()
+    {
+        _baseUrl = Configuration["App:BaseUrl"] ?? "";
+
+        _productSchema = AYIGroupMarket.Web.Services.StructuredDataBuilder.BuildProduct(
+            DisplayName,
+            DisplayDescription,
+            product!.ImageUrls.FirstOrDefault() ?? "",
+            $"{_baseUrl}/boutique/{product.Slug}",
+            product.RetailPrice,
+            product.StockQuantity > 0,
+            reviewSummary?.TotalReviews > 0 ? reviewSummary.AverageRating : null,
+            reviewSummary?.TotalReviews);
+
+        var breadcrumbSchema = AYIGroupMarket.Web.Services.StructuredDataBuilder.BuildBreadcrumbList(new()
+        {
+            (IsFr ? "Accueil" : "Home", _baseUrl),
+            (IsFr ? "Boutique" : "Shop", $"{_baseUrl}/boutique"),
+            (DisplayName, $"{_baseUrl}/boutique/{product.Slug}")
+        });
+
+        _additionalSchema = new List<string> { breadcrumbSchema };
+    }
+    private string DisplayShortDescriptionForSeo()
+    {
+        var desc = DisplayDescription;
+        return desc.Length > 160 ? desc[..157] + "..." : desc; // meta descriptions should stay under ~160 chars
+    }
     private async Task ToggleFavorite()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();

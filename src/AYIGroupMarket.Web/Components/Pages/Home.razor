@@ -1,7 +1,24 @@
 ﻿@page "/"
-<PageTitle>AYI GROUP MARKET</PageTitle>
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+<SeoHead Title="AYI GROUP MARKET — Produits naturels, parfums et accessoires au Cameroun"
+         Description="Spécialiste des produits naturels, parfums et accessoires au Cameroun. Jus FRUILEG, snacks, superaliments, désodorisants. Livraison nationale, prix grossiste disponible."
+         CanonicalUrl="https://ayi-group-market-dev.azurewebsites.net/"
+         StructuredDataJson="@_orgSchema" />
+
 
 <Hero />
 <CategoryShowcase />
 <TrustSignals />
 <WholesaleStrip />
+
+@code {
+    private string? _orgSchema;
+    private string _baseUrl = "";
+
+    protected override void OnInitialized()
+    {
+        _baseUrl = Configuration["App:BaseUrl"] ?? "";
+        _orgSchema = AYIGroupMarket.Web.Services.StructuredDataBuilder.BuildOrganization(_baseUrl);
+    }
+}

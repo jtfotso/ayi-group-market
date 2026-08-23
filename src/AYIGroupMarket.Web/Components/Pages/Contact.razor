@@ -1,9 +1,13 @@
 @page "/contact"
 @inject ISender Sender
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @using AYIGroupMarket.Application.Features.Contact.SubmitContactMessage
 @using System.Globalization
 
-<PageTitle>Contact — AYI GROUP MARKET</PageTitle>
+<SeoHead Title="Contact — AYI GROUP MARKET"
+         Description="@(IsFr ? "Contactez AYI GROUP MARKET. Zone MAGZI Douala-Bassa. WhatsApp: 695 16 20 19. Livraison nationale." : "Contact AYI GROUP MARKET. Zone MAGZI Douala-Bassa. WhatsApp: 695 16 20 19. Nationwide delivery.")"
+         CanonicalUrl="@($"{Configuration["App:BaseUrl"]}/contact")"
+         StructuredDataJson="@_localBusinessSchema" />
 
 <section class="py-5 bg-ayi-soft border-bottom">
     <div class="container">
@@ -85,7 +89,11 @@
     private bool submitted = false;
     private string? errorMessage;
     private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
-
+    private string? _localBusinessSchema;
+    protected override void OnInitialized()
+    {
+        _localBusinessSchema = AYIGroupMarket.Web.Services.StructuredDataBuilder.BuildLocalBusiness(Configuration["App:BaseUrl"] ?? "");
+    }
     private async Task Submit()
     {
         isSubmitting = true;
@@ -109,4 +117,5 @@
             isSubmitting = false;
         }
     }
+
 }

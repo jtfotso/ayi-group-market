@@ -1,5 +1,6 @@
 @page "/grossistes"
 @inject ISender Sender
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @inject AuthenticationStateProvider AuthStateProvider
 @using AYIGroupMarket.Application.Features.Wholesale.GetMyWholesaleAccount
 @inject NavigationManager Nav
@@ -8,7 +9,9 @@
 @using System.Globalization
 @using System.Security.Claims
 
-<PageTitle>@(IsFr ? "Espace grossistes" : "Wholesale") — AYI GROUP MARKET</PageTitle>
+<SeoHead Title="@(IsFr ? "Espace grossistes — AYI GROUP MARKET" : "Wholesale — AYI GROUP MARKET")"
+         Description="@(IsFr ? "Devenez partenaire AYI GROUP. Tarifs par carton, commandes en gros, catalogue PDF dédié aux professionnels." : "Become an AYI GROUP partner. Carton pricing, bulk ordering, dedicated PDF catalog for businesses.")"
+         CanonicalUrl="@($"{Configuration["App:BaseUrl"]}/grossistes")" />
 
 <section class="py-5 bg-ayi-soft border-bottom">
     <div class="container">

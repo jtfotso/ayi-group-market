@@ -1,7 +1,11 @@
 @page "/apropos"
 @using System.Globalization
 
-<PageTitle>À propos — AYI GROUP MARKET</PageTitle>
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+<SeoHead Title="@(IsFr ? "À propos — AYI GROUP MARKET" : "About — AYI GROUP MARKET")"
+         Description="@(IsFr ? "AYI GROUP MARKET est une plateforme de distribution de produits alimentaires naturels, parfums et accessoires au Cameroun." : "AYI GROUP MARKET is a distribution platform for natural food products, fragrances, and accessories in Cameroon.")"
+         CanonicalUrl="@($"{Configuration["App:BaseUrl"]}/apropos")" />
 
 <section class="py-5 bg-ayi-soft border-bottom">
     <div class="container">

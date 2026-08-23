@@ -1,13 +1,16 @@
 @page "/boutique"
 @inject ISender Sender
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @inject Microsoft.Extensions.Localization.IStringLocalizer<AYIGroupMarket.Web.Resources.SharedResource> Localizer
 @inject NavigationManager Nav
 @using AYIGroupMarket.Application.Features.Products.GetProducts
 @using AYIGroupMarket.Application.Features.Categories.GetCategories
 @using System.Globalization
 
-<PageTitle>@Localizer["NavShop"] — AYI GROUP MARKET</PageTitle>
 
+<SeoHead Title="@(IsFr ? "Boutique — AYI GROUP MARKET" : "Shop — AYI GROUP MARKET")"
+         Description="@(IsFr ? "Découvrez notre gamme de produits naturels, parfums et accessoires. Jus FRUILEG, snacks, désodorisants et plus encore." : "Discover our range of natural products, fragrances, and accessories. FRUILEG juices, snacks, air fresheners, and more.")"
+         CanonicalUrl="@($"{Configuration["App:BaseUrl"]}/boutique")" />
 <div class="container py-5">
     <div class="row g-4">
         <div class="col-lg-3">
