@@ -186,9 +186,13 @@
                             <p class="small text-secondary">@addressLine, @city</p>
                         }
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Code promo" : "Promo code")</h3>
-                        <div class="d-flex gap-2 mb-2">
-                            <input class="form-control" style="max-width:200px;" placeholder="@(IsFr ? "Code" : "Code")" @bind="promoCode" />
-                            <button class="btn btn-outline-success" @onclick="ApplyPromoCode" type="button">@(IsFr ? "Appliquer" : "Apply")</button>
+                        <div class="d-flex gap-2 mb-2 align-items-center">
+                            <input class="form-control" style="max-width:200px;" placeholder="@(IsFr ? "Code" : "Code")"
+                                value="@promoCode" @oninput="OnPromoCodeInput" />
+                            @if (isCheckingPromo)
+                            {
+                                <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                            }
                         </div>
                         @if (promoErrorMessage is not null)
                         {
@@ -261,6 +265,8 @@
     private CartDto? cart;
     private string fulfillmentChoice = ""; // "pickup" or "delivery"
     private List<ShippingZoneDto>? zones;
+    private bool isCheckingPromo = false;
+    private CancellationTokenSource? _promoDebounceTokenSource;
     private int currentStep = 1;
     private bool isSubmitting = false;
     private string? errorMessage;
@@ -344,24 +350,6 @@
         _ => ""
     };
 
-    private async Task ApplyPromoCode()
-    {
-        promoErrorMessage = null;
-        appliedDiscount = 0;
-
-        if (string.IsNullOrWhiteSpace(promoCode)) return;
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var isWholesale = authState.User.IsInRole("Wholesale");
-
-        var result = await Sender.Send(new AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode.ValidatePromotionCodeQuery(
-            promoCode, cart!.Total, cart.Items.Sum(i => i.Quantity), isWholesale));
-
-        if (result.IsValid)
-            appliedDiscount = result.DiscountAmount;
-        else
-            promoErrorMessage = result.ErrorMessage;
-    }
     private async Task SubmitOrder()
     {
         isSubmitting = true;
@@ -418,12 +406,6 @@
         }
     }
 
-    @* private void SelectPickup()
-    {
-        isPickupSelected = true;
-        selectedRateId = pickupOption!.Id.ToString();
-    } *@
-
     private void SelectFulfillment(string choice)
     {
         fulfillmentChoice = choice;
@@ -447,6 +429,53 @@
         selectedRateId = "";
     }
 
+    private void OnPromoCodeInput(ChangeEventArgs e)
+    {
+        promoCode = e.Value?.ToString() ?? "";
+        promoErrorMessage = null;
+        appliedDiscount = 0;
+
+        // Cancel any pending debounced check from a previous keystroke
+        _promoDebounceTokenSource?.Cancel();
+        _promoDebounceTokenSource = new CancellationTokenSource();
+        var token = _promoDebounceTokenSource.Token;
+
+        _ = DebouncedApplyPromoCode(token);
+    }
+
+    private async Task DebouncedApplyPromoCode(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(600, token); // wait for the customer to stop typing
+        }
+        catch (TaskCanceledException)
+        {
+            return; // a newer keystroke superseded this check — abandon it
+        }
+
+        if (token.IsCancellationRequested) return;
+        if (string.IsNullOrWhiteSpace(promoCode)) return;
+
+        isCheckingPromo = true;
+        await InvokeAsync(StateHasChanged);
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var isWholesale = authState.User.IsInRole("Wholesale");
+
+        var result = await Sender.Send(new ValidatePromotionCodeQuery(
+            promoCode, cart!.Total, cart.Items.Sum(i => i.Quantity), isWholesale));
+
+        if (token.IsCancellationRequested) return; // superseded again while the server call was in flight
+
+        if (result.IsValid)
+            appliedDiscount = result.DiscountAmount;
+        else
+            promoErrorMessage = result.ErrorMessage;
+
+        isCheckingPromo = false;
+        await InvokeAsync(StateHasChanged);
+    }
     private bool CanProceedFromFulfillment()
     {
         if (fulfillmentChoice == "pickup") return true;
