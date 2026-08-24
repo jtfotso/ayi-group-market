@@ -355,6 +355,12 @@
         isSubmitting = true;
         errorMessage = null;
         StateHasChanged();
+        if (!Guid.TryParse(selectedRateId, out var shippingRateId))
+        {
+            errorMessage = IsFr ? "Veuillez sélectionner un mode de livraison." : "Please select a delivery method.";
+            isSubmitting = false;
+            return;
+        }
 
         try
         {
@@ -366,7 +372,7 @@
             var orderResult = await Sender.Send(new CreateOrderCommand(
                 ownerKey,
                 fulfillmentChoice == "pickup" ? null : new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.TryParse(selectedZoneId, out var zid) ? zid : null),
-                Guid.Parse(selectedRateId),
+                shippingRateId,
                 selectedPaymentMethod,
                 null,
                 string.IsNullOrWhiteSpace(promoCode) ? null : promoCode,
@@ -396,11 +402,11 @@
         }
         catch (Exception ex)
         {
-            @* errorMessage = IsFr
+             errorMessage = IsFr
                 ? "Une erreur est survenue. Veuillez réessayer."
-                : "Something went wrong. Please try again."; *@
+                : "Something went wrong. Please try again."; 
 
-            errorMessage = $"{ex.GetType().Name}: {ex.Message}";
+            @*errorMessage = $"{ex.GetType().Name}: {ex.Message}";*@
 
             isSubmitting = false;
         }
