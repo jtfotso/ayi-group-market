@@ -66,9 +66,11 @@
                 isProcessing = false;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
+            errorMessage = $"DEBUG: {ex.GetType().Name}: {ex.Message}";
+            isProcessing = false;
+            // Nav.NavigateTo($"/commande/confirmation/{OrderNumber}"); // temporarily disabled to see the real error
         }
         
     }
