@@ -74,7 +74,7 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <button type="button" class="btn w-100 py-3 @(fulfillmentChoice == "pickup" ? "btn-success" : "btn-outline-success")"
-                                        @onclick='() => SelectFulfillment("pickup")'>
+                                        @onclick='@(() => SelectFulfillment("pickup"))'>
                                     <div class="fw-bold">@(IsFr ? "Je viens récupérer" : "I'll pick it up")</div>
                                     <small>@(IsFr ? "Gratuit — en magasin" : "Free — in store")</small>
                                 </button>
@@ -412,16 +412,19 @@
         }
     }
 
-    private void SelectFulfillment(string choice)
+    private async Task SelectFulfillment(string choice)
     {
         fulfillmentChoice = choice;
         if (choice == "pickup")
         {
+            if (pickupOption is null)
+                pickupOption = await Sender.Send(new AYIGroupMarket.Application.Features.Shipping.GetPickupOption.GetPickupOptionQuery());
+
             selectedRateId = pickupOption?.Id.ToString() ?? "";
         }
         else
         {
-            selectedRateId = ""; // force a fresh delivery-method choice
+            selectedRateId = "";
         }
     }
 
@@ -484,7 +487,9 @@
     }
     private bool CanProceedFromFulfillment()
     {
-        if (fulfillmentChoice == "pickup") return true;
+        if (fulfillmentChoice == "pickup") 
+            return !string.IsNullOrEmpty(selectedRateId);
+
         if (fulfillmentChoice == "delivery")
             return !string.IsNullOrWhiteSpace(addressLine) && !string.IsNullOrWhiteSpace(city)
                 && !string.IsNullOrEmpty(selectedZoneId) && !string.IsNullOrEmpty(selectedRateId);
