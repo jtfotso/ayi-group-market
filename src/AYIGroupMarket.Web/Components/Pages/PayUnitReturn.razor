@@ -1,5 +1,6 @@
 @page "/commande/payunit-return"
 @inject ISender Sender
+@using AYIGroupMarket.Application.Features.Payments.GetPaymentReferenceByOrderNumber
 @inject NavigationManager Nav
 @using AYIGroupMarket.Application.Features.Payments.VerifyPayment
 
@@ -33,9 +34,27 @@
 
         try
         {
-            // TransactionId is PayUnit's own unique transaction reference (from InitiatePaymentAsync),
-            // not the order number — needed to correctly look up the Payment record.
-            var verified = await Sender.Send(new VerifyPaymentCommand(TransactionId));
+           string referenceToVerify;
+
+            if (!string.IsNullOrEmpty(TransactionId))
+            {
+                referenceToVerify = TransactionId;
+            }
+            else
+            {
+                // PayUnit didn't append transaction_id this time — fall back to looking up
+                // the Payment record via the order number instead
+                var lookupResult = await Sender.Send(new GetPaymentReferenceByOrderNumberQuery(OrderNumber));
+                if (lookupResult is null)
+                {
+                    errorMessage = "Informations de commande manquantes.";
+                    isProcessing = false;
+                    return;
+                }
+                referenceToVerify = lookupResult;
+            }
+
+            var verified = await Sender.Send(new VerifyPaymentCommand(referenceToVerify));
 
             if (verified)
             {
@@ -49,8 +68,6 @@
         }
         catch (Exception)
         {
-            // If verification already succeeded on an earlier load, just send them to confirmation directly
-            // rather than showing a scary error for what's likely just a duplicate/idempotency edge case
             Nav.NavigateTo($"/commande/confirmation/{OrderNumber}");
         }
         
