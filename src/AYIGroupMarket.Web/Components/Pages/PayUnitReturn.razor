@@ -66,12 +66,12 @@
                 isProcessing = false;
             }
         }
-        catch (Exception ex)
+        catch (Exception )
         {
-            var innerMessage = ex.InnerException?.Message ?? "no inner exception";
+            @* var innerMessage = ex.InnerException?.Message ?? "no inner exception";
             errorMessage = $"DEBUG: {ex.GetType().Name}: {ex.Message} | INNER: {innerMessage}";
-            isProcessing = false;
-            // Nav.NavigateTo($"/commande/confirmation/{OrderNumber}"); // temporarily disabled to see the real error
+            isProcessing = false; *@
+            Nav.NavigateTo($"/commande/confirmation/{OrderNumber}"); // temporarily disabled to see the real error
         }
         
     }
