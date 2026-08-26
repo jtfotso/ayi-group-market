@@ -29,7 +29,8 @@ public class VerifyPaymentCommandHandler(IApplicationDbContext db, IPaymentGatew
         {
             PaymentId = payment.Id,
             EventType = "Verify",
-            RawStatus = verification.Status
+            RawStatus = verification.Status,
+            RawPayload = verification.Status // full detail preserved here, unbounded
         });
 
         if (verification.IsVerified)

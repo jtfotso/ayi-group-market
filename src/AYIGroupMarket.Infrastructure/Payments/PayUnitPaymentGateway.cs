@@ -74,7 +74,7 @@ public class PayUnitPaymentGateway(HttpClient httpClient, IOptions<PayUnitOption
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
-                return new PaymentVerificationResultDto(false, $"STATUS_CHECK_FAILED: {responseJson}", null);
+                return new PaymentVerificationResultDto(false, "STATUS_CHECK_FAILED", null);
 
             using var doc = JsonDocument.Parse(responseJson);
             var data = doc.RootElement.GetProperty("data");
