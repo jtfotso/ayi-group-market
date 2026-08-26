@@ -371,6 +371,9 @@
 
             var orderResult = await Sender.Send(new CreateOrderCommand(
                 ownerKey,
+                fullName, 
+                phone, 
+                string.IsNullOrWhiteSpace(email) ? null : email,
                 fulfillmentChoice == "pickup" ? null : new CreateAddressRequest(fullName, phone, email, addressLine, city, Guid.TryParse(selectedZoneId, out var zid) ? zid : null),
                 shippingRateId,
                 selectedPaymentMethod,

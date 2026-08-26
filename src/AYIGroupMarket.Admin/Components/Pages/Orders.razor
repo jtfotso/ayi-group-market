@@ -84,7 +84,14 @@
                         <div class="alert alert-danger">@actionError</div>
                     }
                     <p><strong>Customer:</strong> @selectedOrder.CustomerName — @selectedOrder.CustomerPhone @(selectedOrder.CustomerEmail is not null ? $"— {selectedOrder.CustomerEmail}" : "")</p>
-                    <p><strong>Delivery:</strong> @selectedOrder.AddressLine, @selectedOrder.City (@selectedOrder.ShippingZoneName)</p>
+                    @if (selectedOrder.IsPickup)
+                    {
+                        <p><strong>Delivery:</strong> Store pickup</p>
+                    }
+                    else
+                    {
+                        <p><strong>Delivery:</strong> @selectedOrder.AddressLine, @selectedOrder.City (@selectedOrder.ShippingZoneName)</p>
+                    }
                     <p><strong>Payment method:</strong> @selectedOrder.PaymentMethod</p>
 
                     <table class="table table-sm">

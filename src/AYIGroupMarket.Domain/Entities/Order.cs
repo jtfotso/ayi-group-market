@@ -29,5 +29,8 @@ public class Order : BaseEntity
     public string? PromoCode { get; set; }
     public string? Notes { get; set; }
     public string? TrackingNumber { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerPhone { get; set; } = string.Empty;
+    public string? CustomerEmail { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

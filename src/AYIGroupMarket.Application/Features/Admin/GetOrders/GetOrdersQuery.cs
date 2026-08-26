@@ -19,7 +19,7 @@ public class GetOrdersQueryHandler(IApplicationDbContext db)
 {
     public async Task<PagedResult<AdminOrderListItemDto>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
-        var query = db.Orders.AsNoTracking().Include(o => o.Address).AsQueryable();
+        var query = db.Orders.AsNoTracking().AsQueryable();
 
         if (request.Status.HasValue)
             query = query.Where(o => o.Status == request.Status.Value);
@@ -29,8 +29,8 @@ public class GetOrdersQueryHandler(IApplicationDbContext db)
             var term = request.SearchTerm.Trim();
             query = query.Where(o =>
                 o.OrderNumber.Contains(term) ||
-                o.Address.FullName.Contains(term) ||
-                o.Address.Phone.Contains(term));
+                o.CustomerName.Contains(term) ||
+                o.CustomerPhone.Contains(term));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -40,7 +40,7 @@ public class GetOrdersQueryHandler(IApplicationDbContext db)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(o => new AdminOrderListItemDto(
-                o.Id, o.OrderNumber, o.Address.FullName, o.Address.Phone,
+                o.Id, o.OrderNumber, o.CustomerName, o.CustomerPhone,
                 o.Status.ToString(), o.Total, o.PaymentMethod.ToString(), o.CreatedAt))
             .ToListAsync(cancellationToken);
 

@@ -22,8 +22,8 @@ public class GetOrderDetailQueryHandler(IApplicationDbContext db)
         return new AdminOrderDetailDto(
             order.Id, order.OrderNumber, order.Status.ToString(), order.PaymentMethod.ToString(),
             order.TrackingNumber, order.Notes, order.CustomerConfirmedAt, order.Subtotal, order.ShippingFee, order.Total,
-            order.Address.FullName, order.Address.Phone, order.Address.Email,
-            order.Address.AddressLine, order.Address.City, order.Address.ShippingZone.Name,
+            order.CustomerName, order.CustomerPhone, order.CustomerEmail, order.IsPickup,
+            order.Address?.AddressLine, order.Address?.City, order.Address?.ShippingZone?.Name,
             order.Items.Select(i => new OrderItemDto(
                 i.ProductNameSnapshot, i.ProductNameEnSnapshot,
                 i.VariantNameSnapshot, i.VariantNameEnSnapshot,

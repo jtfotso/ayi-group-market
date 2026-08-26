@@ -11,6 +11,9 @@ namespace AYIGroupMarket.Application.Features.Orders.CreateOrder;
 
 public record CreateOrderCommand(
     string OwnerKey,
+    string CustomerName,
+    string CustomerPhone,
+    string? CustomerEmail,
     CreateAddressRequest? Address,
     Guid ShippingRateId,
     PaymentMethod PaymentMethod,
@@ -99,6 +102,9 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
         {
             OrderNumber = orderNumber,
             OwnerKey = request.OwnerKey,
+            CustomerName = request.CustomerName,
+            CustomerPhone = request.CustomerPhone,
+            CustomerEmail = request.CustomerEmail,
             AddressId = addressId, // now needs to be nullable on Order too — see step below
             ShippingRateId = shippingRate.Id,
             PaymentMethod = request.PaymentMethod,

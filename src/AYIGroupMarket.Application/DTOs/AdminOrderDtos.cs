@@ -24,8 +24,9 @@ public record AdminOrderDetailDto(
     string CustomerName,
     string CustomerPhone,
     string? CustomerEmail,
-    string AddressLine,
-    string City,
-    string ShippingZoneName,
+    bool IsPickup,
+    string? AddressLine,
+    string? City,
+    string? ShippingZoneName,
     List<OrderItemDto> Items,
     DateTime CreatedAt);
