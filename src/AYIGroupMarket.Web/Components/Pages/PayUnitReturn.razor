@@ -68,7 +68,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"DEBUG: {ex.GetType().Name}: {ex.Message}";
+            var innerMessage = ex.InnerException?.Message ?? "no inner exception";
+            errorMessage = $"DEBUG: {ex.GetType().Name}: {ex.Message} | INNER: {innerMessage}";
             isProcessing = false;
             // Nav.NavigateTo($"/commande/confirmation/{OrderNumber}"); // temporarily disabled to see the real error
         }
