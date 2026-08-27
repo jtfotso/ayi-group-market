@@ -7,6 +7,7 @@ using AYIGroupMarket.Infrastructure.Storage;
 using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // Add services to the container.
 builder.Services.AddApplication();

@@ -56,7 +56,7 @@ else
                         <i class="bi bi-check-circle-fill"></i> @(IsFr ? "Réception confirmée" : "Receipt confirmed")
                     </p>
                 }
-                <a href="/mon-compte/commandes/@order.OrderNumber/facture.pdf" class="btn btn-outline-success btn-sm mt-2" target="_blank">
+                <a href="/facture/@order.OrderNumber" class="btn btn-outline-success btn-sm mt-2" target="_blank">
                     <i class="bi bi-file-earmark-pdf"></i> @(IsFr ? "Télécharger la facture" : "Download invoice")
                 </a>
             </div>

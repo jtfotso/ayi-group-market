@@ -1,0 +1,35 @@
+@page "/facture"
+@using System.Globalization
+
+<PageTitle>@(IsFr ? "Ma facture" : "My invoice") — AYI GROUP MARKET</PageTitle>
+
+<div class="container py-5" style="max-width: 480px;">
+    <h1 class="fw-bold mb-4">@(IsFr ? "Télécharger ma facture" : "Download my invoice")</h1>
+
+    <div class="mb-3">
+        <label class="form-label">@(IsFr ? "Numéro de commande" : "Order number")</label>
+        <input class="form-control" @bind="orderNumber" placeholder="AYI-2026-000001" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">@(IsFr ? "Numéro de téléphone utilisé lors de la commande" : "Phone number used at checkout")</label>
+        <input class="form-control" @bind="phone" />
+    </div>
+
+    <a href="@InvoiceUrl" class="btn btn-success" target="_blank">
+        @(IsFr ? "Télécharger la facture" : "Download invoice")
+    </a>
+
+    <p class="text-secondary small mt-3">
+        @(IsFr
+            ? "Si vous avez un compte, connectez-vous pour accéder directement à votre historique de commandes."
+            : "If you have an account, log in to access your order history directly.")
+    </p>
+</div>
+
+@code {
+    private string orderNumber = "";
+    private string phone = "";
+    private bool IsFr => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+
+    private string InvoiceUrl => $"/facture/{Uri.EscapeDataString(orderNumber)}?phone={Uri.EscapeDataString(phone)}";
+}

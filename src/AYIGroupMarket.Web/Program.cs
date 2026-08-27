@@ -185,25 +185,36 @@ app.MapGet("/grossistes/catalogue.pdf", async (
     return Results.File(pdfBytes, "application/pdf", "AYI-Group-Market-Catalogue-Grossiste.pdf");
 }).RequireAuthorization();
 
-app.MapGet("/mon-compte/commandes/{orderNumber}/facture.pdf", async (
+app.MapGet("/facture/{orderNumber}", async (
     string orderNumber,
+    string phone,
     AYIGroupMarket.Application.Abstractions.IInvoiceGenerator generator,
-    HttpContext httpContext,
     AYIGroupMarket.Infrastructure.Persistence.AppDbContext db,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    if (httpContext.User.Identity?.IsAuthenticated != true)
-        return Results.Redirect("/account/login");
-
-    var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, cancellationToken);
 
-    if (order is null || order.OwnerKey != $"user:{userId}")
+    if (order is null)
+        return Results.NotFound();
+
+    // If logged in and it's their own order, skip the phone check entirely
+    var userId = httpContext.User.Identity?.IsAuthenticated == true
+        ? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        : null;
+
+    var isOwnerViaAccount = userId is not null && order.OwnerKey == $"user:{userId}";
+
+    // Otherwise require the phone number to match — proves the requester knows real order details
+    var isVerifiedViaPhone = !string.IsNullOrEmpty(phone) &&
+        order.CustomerPhone.Replace(" ", "") == phone.Replace(" ", "");
+
+    if (!isOwnerViaAccount && !isVerifiedViaPhone)
         return Results.Forbid();
 
     var isFrench = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
     var pdfBytes = await generator.GenerateAsync(order.Id, isFrench, cancellationToken);
     return Results.File(pdfBytes, "application/pdf", $"Facture-{orderNumber}.pdf");
-}).RequireAuthorization();
+});
 
 app.Run();

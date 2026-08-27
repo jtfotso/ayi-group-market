@@ -31,7 +31,10 @@
                 <span>@order.Total.ToString("C")</span>
             </div>
         </div>
-
+        <p class="text-secondary small mt-3">
+            @(IsFr ? "Conservez votre numéro de commande pour télécharger votre facture plus tard depuis" : "Keep your order number to download your invoice later from")
+            <a href="/facture">@(IsFr ? "cette page" : "this page")</a>.
+        </p>
         <a href="/" class="btn btn-success mt-4">@(IsFr ? "Retour à l'accueil" : "Back to home")</a>
     }
 </div>
