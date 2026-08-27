@@ -123,4 +123,14 @@ app.MapGet("/orders/export.csv", async (
     return Results.File(csvBytes, "text/csv", $"orders-export-{DateTime.Today:yyyy-MM-dd}.csv");
 }).RequireAuthorization("RequireAdmin");
 
+app.MapGet("/orders/{orderId:guid}/invoice.pdf", async (
+    Guid orderId,
+    AYIGroupMarket.Application.Abstractions.IInvoiceGenerator generator,
+    CancellationToken cancellationToken) =>
+{
+    var isFrench = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+    var pdfBytes = await generator.GenerateAsync(orderId, isFrench, cancellationToken);
+    return Results.File(pdfBytes, "application/pdf", "Facture.pdf");
+}).RequireAuthorization("RequireAdmin");
+
 app.Run();

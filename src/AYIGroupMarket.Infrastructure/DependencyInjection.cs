@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.Configure<AppOptions>(configuration.GetSection("App"));
         services.Configure<Payments.PayUnitOptions>(configuration.GetSection("PayUnit"));
         services.AddHttpClient<Payments.PayUnitPaymentGateway>();
+        services.AddScoped<IInvoiceGenerator, Pdf.InvoiceGenerator>();
         //services.AddScoped<IFileStorageService, Storage.LocalFileStorageService>();
         
         return services;

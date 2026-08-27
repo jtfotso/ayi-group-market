@@ -185,6 +185,25 @@ app.MapGet("/grossistes/catalogue.pdf", async (
     return Results.File(pdfBytes, "application/pdf", "AYI-Group-Market-Catalogue-Grossiste.pdf");
 }).RequireAuthorization();
 
+app.MapGet("/mon-compte/commandes/{orderNumber}/facture.pdf", async (
+    string orderNumber,
+    AYIGroupMarket.Application.Abstractions.IInvoiceGenerator generator,
+    HttpContext httpContext,
+    AYIGroupMarket.Infrastructure.Persistence.AppDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    if (httpContext.User.Identity?.IsAuthenticated != true)
+        return Results.Redirect("/account/login");
 
+    var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, cancellationToken);
+
+    if (order is null || order.OwnerKey != $"user:{userId}")
+        return Results.Forbid();
+
+    var isFrench = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr";
+    var pdfBytes = await generator.GenerateAsync(order.Id, isFrench, cancellationToken);
+    return Results.File(pdfBytes, "application/pdf", $"Facture-{orderNumber}.pdf");
+}).RequireAuthorization();
 
 app.Run();

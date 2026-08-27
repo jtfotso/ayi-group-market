@@ -122,6 +122,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <a href="/orders/@selectedOrder.Id/invoice.pdf" class="btn btn-outline-success" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> Download Invoice
+                    </a>
                     <button class="btn btn-outline-danger" @onclick="() => CancelSelectedOrder()">Cancel Order</button>
                     <button class="btn btn-success" @onclick="SaveStatus">Save</button>
                 </div>
