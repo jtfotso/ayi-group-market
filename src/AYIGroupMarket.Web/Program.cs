@@ -95,14 +95,22 @@ Directory.CreateDirectory(uploadsPath); */ // ensure it exists even on first run
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapGet("/culture/set", (HttpContext httpContext, string culture, string redirectUri) =>
+app.MapGet("/culture/set", (HttpContext httpContext, string culture) =>
 {
     httpContext.Response.Cookies.Append(
         CookieRequestCultureProvider.DefaultCookieName,
         CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture, culture)),
         new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
 
-    return Results.LocalRedirect(redirectUri);
+    var referer = httpContext.Request.Headers["Referer"].ToString();
+    string redirectTarget = "/";
+
+    if (Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
+    {
+        redirectTarget = refererUri.PathAndQuery; // just the path+query, no host — inherently local-safe
+    }
+
+    return Results.LocalRedirect(redirectTarget);
 }).DisableAntiforgery();
 
 app.MapPost("/account/register-submit", async (

@@ -1,18 +1,16 @@
 @inject NavigationManager Nav
 
 <div class="lang-toggle">
-    <a class="lang-btn @(currentCulture == "fr" ? "is-active" : "")"
-       href="@BuildCultureUrl("fr")">FR</a>
-    <a class="lang-btn @(currentCulture == "en" ? "is-active" : "")"
-       href="@BuildCultureUrl("en")">EN</a>
+    <form method="get" action="/culture/set" style="display:inline;">
+        <input type="hidden" name="culture" value="fr" />
+        <button type="submit" class="lang-btn @(currentCulture == "fr" ? "is-active" : "")">FR</button>
+    </form>
+    <form method="get" action="/culture/set" style="display:inline;">
+        <input type="hidden" name="culture" value="en" />
+        <button type="submit" class="lang-btn @(currentCulture == "en" ? "is-active" : "")">EN</button>
+    </form>
 </div>
 
 @code {
     private string currentCulture => System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-
-    private string BuildCultureUrl(string culture)
-    {
-        var returnUrl = Uri.EscapeDataString(Nav.ToBaseRelativePath(Nav.Uri));
-        return $"/culture/set?culture={culture}&redirectUri=/{returnUrl}";
-    }
 }
