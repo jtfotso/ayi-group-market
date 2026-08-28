@@ -187,7 +187,7 @@ app.MapGet("/grossistes/catalogue.pdf", async (
 
 app.MapGet("/facture/{orderNumber}", async (
     string orderNumber,
-    string phone,
+    string? phone,
     AYIGroupMarket.Application.Abstractions.IInvoiceGenerator generator,
     AYIGroupMarket.Infrastructure.Persistence.AppDbContext db,
     HttpContext httpContext,
@@ -198,14 +198,12 @@ app.MapGet("/facture/{orderNumber}", async (
     if (order is null)
         return Results.NotFound();
 
-    // If logged in and it's their own order, skip the phone check entirely
     var userId = httpContext.User.Identity?.IsAuthenticated == true
         ? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         : null;
 
     var isOwnerViaAccount = userId is not null && order.OwnerKey == $"user:{userId}";
 
-    // Otherwise require the phone number to match — proves the requester knows real order details
     var isVerifiedViaPhone = !string.IsNullOrEmpty(phone) &&
         order.CustomerPhone.Replace(" ", "") == phone.Replace(" ", "");
 
