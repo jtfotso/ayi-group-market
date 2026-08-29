@@ -122,9 +122,12 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="/orders/@selectedOrder.Id/invoice.pdf" class="btn btn-outline-success" target="_blank">
-                        <i class="bi bi-file-earmark-pdf"></i> Download Invoice
-                    </a>
+                    @if (selectedOrder.Status is "Paid" or "Processing" or "ReadyForDelivery" or "Shipped" or "Delivered")
+                    {
+                        <a href="/orders/@selectedOrder.Id/invoice.pdf" class="btn btn-outline-success" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> Download Invoice
+                        </a>
+                    }
                     <button class="btn btn-outline-danger" @onclick="() => CancelSelectedOrder()">Cancel Order</button>
                     <button class="btn btn-success" @onclick="SaveStatus">Save</button>
                 </div>
@@ -137,6 +140,7 @@
 
 @code {
     private PagedResult<AYIGroupMarket.Application.DTOs.AdminOrderListItemDto>? orders;
+        [SupplyParameterFromQuery(Name = "status")] public string? InitialStatusFilter { get; set; }
     private string searchTerm = "";
     private string statusFilter = "";
     private AYIGroupMarket.Application.DTOs.AdminOrderDetailDto? selectedOrder;
@@ -149,6 +153,9 @@
     {
         if (firstRender)
         {
+            if (!string.IsNullOrEmpty(InitialStatusFilter))
+                statusFilter = InitialStatusFilter;
+
             await Load();
             StateHasChanged();
         }

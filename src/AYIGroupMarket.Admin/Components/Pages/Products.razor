@@ -4,6 +4,7 @@
 @using AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin
 @inject IFileStorageService FileStorage
 @using AYIGroupMarket.Application.Features.Products.GetProducts
+@using Microsoft.EntityFrameworkCore
 @using AYIGroupMarket.Application.Features.Products.GetProductForEdit
 @using AYIGroupMarket.Application.Features.Products.CreateProduct
 @using AYIGroupMarket.Application.Features.Products.UpdateProduct
@@ -19,7 +20,7 @@
 <PageTitle>Admin — Products</PageTitle>
 
 <div class="container py-4">
-    <h1>Products</h1>
+    <h1>Products @(Filter == "lowstock" ? "— Low Stock" : "")</h1>
 
     <table class="table table-sm">
         <thead>
@@ -158,7 +159,7 @@
 </div>
 
 @code {
-//    private PagedResult<AYIGroupMarket.Application.DTOs.ProductListItemDto>? products;
+    
     private List<AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin.AdminProductListItemDto>? products;
     private List<AYIGroupMarket.Application.DTOs.ProductCategoryDto>? categories;
     private Guid? editingId;
@@ -167,6 +168,7 @@
     private VariantFormModel variantForm = new();
     private List<ProductEditImageDto> images = new();
     private List<ProductEditVariantDto> variants = new();
+    [SupplyParameterFromQuery(Name = "filter")] public string? Filter { get; set; }
     private string? saveError;
     private string? variantError;
     private Guid? editingVariantId;
@@ -182,7 +184,7 @@
 
     private async Task Load()
     {
-        products = await Sender.Send(new AYIGroupMarket.Application.Features.Admin.GetProductsForAdmin.GetProductsForAdminQuery());
+        products = await Sender.Send(new GetProductsForAdminQuery(LowStockOnly: Filter == "lowstock"));
     }
 
     private void NewProduct()
@@ -384,6 +386,8 @@
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; }
     }
+
+    
 
     public class VariantFormModel
     {

@@ -56,9 +56,12 @@ else
                         <i class="bi bi-check-circle-fill"></i> @(IsFr ? "Réception confirmée" : "Receipt confirmed")
                     </p>
                 }
-                <a href="/facture/@order.OrderNumber" class="btn btn-outline-success btn-sm mt-2" target="_blank">
-                    <i class="bi bi-file-earmark-pdf"></i> @(IsFr ? "Télécharger la facture" : "Download invoice")
-                </a>
+                @if (order.Status is "Paid" or "Processing" or "ReadyForDelivery" or "Shipped" or "Delivered")
+                {
+                    <a href="/facture/@order.OrderNumber" class="btn btn-outline-success btn-sm mt-2" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> @(IsFr ? "Télécharger la facture" : "Download invoice")
+                    </a>
+                }
             </div>
         </div>
     }

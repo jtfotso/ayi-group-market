@@ -12,14 +12,70 @@
     @if (metrics is not null)
     {
         <div class="row g-3">
-            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Revenue</small><h3>@metrics.TotalRevenue.ToString("C")</h3></div></div>
-            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Orders</small><h3>@metrics.TotalOrders</h3></div></div>
-            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Avg. Order Value</small><h3>@metrics.AverageOrderValue.ToString("C")</h3></div></div>
-            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Customers</small><h3>@metrics.TotalCustomers</h3></div></div>
-            <div class="col-md-3"><div class="card p-3"><small class="text-secondary">Wholesale Customers</small><h3>@metrics.WholesaleCustomers</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 @(metrics.LowStockProductCount > 0 ? "border-warning" : "")"><small class="text-secondary">Low Stock Products</small><h3>@metrics.LowStockProductCount</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 @(metrics.PendingWholesaleApplications > 0 ? "border-warning" : "")"><small class="text-secondary">Pending Wholesale Apps</small><h3>@metrics.PendingWholesaleApplications</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 @(metrics.PendingOrders > 0 ? "border-warning" : "")"><small class="text-secondary">Pending Orders</small><h3>@metrics.PendingOrders</h3></div></div>
+            <div class="col-md-3">
+                <a href="/reports" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card">
+                        <small class="text-secondary">Revenue</small>
+                        <h3>@metrics.TotalRevenue.ToString("C")</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/orders" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card">
+                        <small class="text-secondary">Orders</small>
+                        <h3>@metrics.TotalOrders</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/reports" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card">
+                        <small class="text-secondary">Avg. Order Value</small>
+                        <h3>@metrics.AverageOrderValue.ToString("C")</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/customers" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card">
+                        <small class="text-secondary">Customers</small>
+                        <h3>@metrics.TotalCustomers</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/wholesale-accounts" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card">
+                        <small class="text-secondary">Wholesale Customers</small>
+                        <h3>@metrics.WholesaleCustomers</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/products?filter=lowstock" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card @(metrics.LowStockProductCount > 0 ? "border-warning" : "")">
+                        <small class="text-secondary">Low Stock Products</small>
+                        <h3>@metrics.LowStockProductCount</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/wholesale-accounts" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card @(metrics.PendingWholesaleApplications > 0 ? "border-warning" : "")">
+                        <small class="text-secondary">Pending Wholesale Apps</small>
+                        <h3>@metrics.PendingWholesaleApplications</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/orders?status=Pending" class="text-decoration-none text-dark">
+                    <div class="card p-3 dashboard-card @(metrics.PendingOrders > 0 ? "border-warning" : "")">
+                        <small class="text-secondary">Pending Orders</small>
+                        <h3>@metrics.PendingOrders</h3>
+                    </div>
+                </a>
+            </div>
         </div>
     }
 </div>

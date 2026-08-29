@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using AYIGroupMarket.Application;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using AYIGroupMarket.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
@@ -198,12 +199,15 @@ app.MapGet("/facture/{orderNumber}", async (
     if (order is null)
         return Results.NotFound();
 
+    var payableStatuses = new[] { OrderStatus.Paid, OrderStatus.Processing, OrderStatus.ReadyForDelivery, OrderStatus.Shipped, OrderStatus.Delivered };
+    if (!payableStatuses.Contains(order.Status))
+        return Results.BadRequest("Invoice is only available for paid orders.");
+
     var userId = httpContext.User.Identity?.IsAuthenticated == true
         ? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         : null;
 
     var isOwnerViaAccount = userId is not null && order.OwnerKey == $"user:{userId}";
-
     var isVerifiedViaPhone = !string.IsNullOrEmpty(phone) &&
         order.CustomerPhone.Replace(" ", "") == phone.Replace(" ", "");
 
