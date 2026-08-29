@@ -95,11 +95,11 @@
                     <p><strong>Payment method:</strong> @selectedOrder.PaymentMethod</p>
 
                     <table class="table table-sm">
-                        <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+                        <thead><tr><th>Item</th><th>Qty</th><th>unit price</th><th>Total</th></tr></thead>
                         <tbody>
                             @foreach (var item in selectedOrder.Items)
                             {
-                                <tr><td>@item.ProductName</td><td>@item.Quantity</td><td>@item.LineTotal.ToString("C")</td></tr>
+                                <tr><td>@item.ProductName</td><td>@item.Quantity</td><td>@item.UnitPrice.ToString("C")</td><td>@item.LineTotal.ToString("C")</td></tr>
                             }
                         </tbody>
                     </table>
