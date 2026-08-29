@@ -54,7 +54,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="fw-bold text-success">@item.LineTotal.ToString("C")</div>
+                        <div class="fw-bold text-success">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(item.LineTotal)</div>
                     </div>
                 }
             </div>
@@ -64,7 +64,7 @@
                     <h2 class="h5 fw-bold mb-3">@(IsFr ? "Résumé" : "Summary")</h2>
                     <div class="d-flex justify-content-between mb-2">
                         <span>@(IsFr ? "Sous-total" : "Subtotal")</span>
-                        <span class="fw-bold">@cart.Total.ToString("C")</span>
+                        <span class="fw-bold">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(cart.Total)</span>
                     </div>
                     <p class="small text-secondary">@(IsFr ? "Frais de livraison calculés à l'étape suivante." : "Shipping calculated at next step.")</p>
                     <a href="/commande" class="btn btn-success w-100 mt-2">@(IsFr ? "Passer la commande" : "Checkout")</a>

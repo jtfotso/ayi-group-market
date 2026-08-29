@@ -33,9 +33,9 @@
     @if (report is not null)
     {
         <div class="row g-3 mb-4">
-            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Total Revenue</small><h3>@report.TotalRevenue.ToString("C")</h3></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Total Revenue</small><h3>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(report.TotalRevenue)</h3></div></div>
             <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Total Orders</small><h3>@report.TotalOrders</h3></div></div>
-            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Avg. Order Value</small><h3>@(report.TotalOrders > 0 ? (report.TotalRevenue / report.TotalOrders).ToString("C") : "-")</h3></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-secondary">Avg. Order Value</small><h3>@(report.TotalOrders > 0 ? AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(report.TotalRevenue / report.TotalOrders) : "-")</h3></div></div>
         </div>
 
         @if (report.Periods.Count == 0)
@@ -54,7 +54,7 @@
                     {
                         var heightPercent = maxRevenue > 0 ? (double)(period.Revenue / maxRevenue) * 100 : 0;
                         <div class="d-flex flex-column align-items-center flex-grow-1" style="height:100%;">
-                            <div class="bg-success rounded-top w-100" style="height:@(heightPercent)%; min-height:2px;" title="@period.Revenue.ToString("C")"></div>
+                            <div class="bg-success rounded-top w-100" style="height:@(heightPercent)%; min-height:2px;" title="@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(period.Revenue)"></div>
                             <small class="text-secondary mt-1" style="font-size:.7rem;">@period.PeriodLabel</small>
                         </div>
                     }
@@ -66,7 +66,7 @@
                 <tbody>
                     @foreach (var period in report.Periods)
                     {
-                        <tr><td>@period.PeriodLabel</td><td>@period.OrderCount</td><td>@period.Revenue.ToString("C")</td></tr>
+                        <tr><td>@period.PeriodLabel</td><td>@period.OrderCount</td><td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(period.Revenue)</td></tr>
                     }
                 </tbody>
             </table>

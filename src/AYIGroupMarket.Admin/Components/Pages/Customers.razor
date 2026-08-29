@@ -28,7 +28,7 @@
                         <td>@c.Email</td>
                         <td>@c.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td>@c.OrderCount</td>
-                        <td>@c.TotalSpent.ToString("C")</td>
+                        <td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(c.TotalSpent)</td>
                         <td>
                             @if (c.IsWholesale)
                             {
@@ -95,7 +95,7 @@
                             <tbody>
                                 @foreach (var order in selectedCustomer.Orders)
                                 {
-                                    <tr><td>@order.OrderNumber</td><td>@order.Status</td><td>@order.Total.ToString("C")</td></tr>
+                                    <tr><td>@order.OrderNumber</td><td>@order.Status</td><td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(order.Total)</td></tr>
                                 }
                             </tbody>
                         </table>

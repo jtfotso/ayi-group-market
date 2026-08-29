@@ -27,7 +27,7 @@ else
                     <div class="card h-100 border-0 bg-ayi-soft rounded-4">
                         <div class="card-body">
                             <h3 class="h6 fw-bold">@(IsFr ? fav.Name : fav.NameEn)</h3>
-                            <span class="fw-bold text-success">@fav.RetailPrice.ToString("C")</span>
+                            <span class="fw-bold text-success">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(fav.RetailPrice)</span>
                         </div>
                     </div>
                 </a>

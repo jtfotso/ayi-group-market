@@ -21,8 +21,8 @@
                     <tr>
                         <td>@p.Code</td>
                         <td>@p.Type</td>
-                        <td>@(p.DiscountPercentage.HasValue ? $"{p.DiscountPercentage}%" : p.DiscountAmount?.ToString("C") ?? "-")</td>
-                        <td>@(p.MinimumOrderAmount?.ToString("C") ?? "-")</td>
+                        <td>@(p.DiscountPercentage.HasValue ? $"{p.DiscountPercentage}%" : p.DiscountAmount is not null ? AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(p.DiscountAmount.Value) : "-")</td>
+                        <td>@(p.MinimumOrderAmount is not null ? AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(p.MinimumOrderAmount.Value) : "-")</td>
                         <td>@(!string.IsNullOrEmpty(p.TargetCustomerPhone) || !string.IsNullOrEmpty(p.TargetCustomerEmail) ? $"{p.TargetCustomerPhone} {p.TargetCustomerEmail}".Trim() : "Anyone")</td>
                         <td>@(p.IsActive ? "Yes" : "No")</td>
                         <td>@p.UsesCount@(p.MaxUses is not null ? $" / {p.MaxUses}" : "")</td>

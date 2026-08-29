@@ -54,7 +54,7 @@
                         <td>@o.CustomerName</td>
                         <td>@o.CustomerPhone</td>
                         <td><span class="badge @StatusBadgeClass(o.Status)">@o.Status</span></td>
-                        <td>@o.Total.ToString("C")</td>
+                        <td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(o.Total)</td>
                         <td>@o.PaymentMethod</td>
                         <td>@o.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td><button class="btn btn-sm btn-outline-primary" @onclick="() => OpenDetail(o.Id)">View</button></td>
@@ -99,11 +99,11 @@
                         <tbody>
                             @foreach (var item in selectedOrder.Items)
                             {
-                                <tr><td>@item.ProductName</td><td>@item.Quantity</td><td>@item.UnitPrice.ToString("C")</td><td>@item.LineTotal.ToString("C")</td></tr>
+                                <tr><td>@item.ProductName</td><td>@item.Quantity</td><td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(item.UnitPrice)</td><td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(item.LineTotal)</td></tr>
                             }
                         </tbody>
                     </table>
-                    <p class="fw-bold">Total: @selectedOrder.Total.ToString("C")</p>
+                    <p class="fw-bold">Total: @AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(selectedOrder.Total)</p>
 
                     <div class="row g-2 mt-3">
                         <div class="col-md-6">

@@ -104,7 +104,7 @@ else
 
                     @if (GetSelectedRetailPrice() is not null)
                     {
-                        <p class="fs-3 fw-bold text-success mb-4">@GetSelectedRetailPrice()!.Amount.ToString("C")</p>
+                        <p class="fs-3 fw-bold text-success mb-4">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(GetSelectedRetailPrice()!.Amount)</p>
                     }
                     else
                     {
@@ -116,7 +116,7 @@ else
                     <div class="mb-2">
                         <span class="badge bg-success">@(IsFr ? "Prix grossiste" : "Wholesale price")</span>
                     </div>
-                    <p class="fs-3 fw-bold text-success mb-1">@pricing.WholesalePrice.Value.ToString("C")</p>
+                    <p class="fs-3 fw-bold text-success mb-1">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(pricing.WholesalePrice.Value)</p>
                     @if (pricing.MinimumWholesaleQuantity is not null)
                     {
                         <p class="small text-secondary mb-4">
@@ -126,7 +126,7 @@ else
                 }
                 else
                 {
-                    <p class="fs-3 fw-bold text-success mb-4">@product.RetailPrice.ToString("C")</p>
+                    <p class="fs-3 fw-bold text-success mb-4">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(product.RetailPrice)</p>
                 }
 
                 <div class="d-flex align-items-center gap-2 mb-3">

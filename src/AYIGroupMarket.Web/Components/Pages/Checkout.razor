@@ -129,7 +129,7 @@
                                                 @(IsFr ? rate.DeliveryMethod : rate.DeliveryMethodEn)
                                                 <br /><small class="text-secondary">@(IsFr ? $"Livraison sous {rate.DeliveryDays} jours" : $"Delivery within {rate.DeliveryDays} days")</small>
                                             </span>
-                                            <span class="fw-bold">@fee.ToString("C")</span>
+                                            <span class="fw-bold">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(fee)</span>
                                         </label>
                                     </div>
                                 }
@@ -200,7 +200,7 @@
                         }
                         @if (appliedDiscount > 0)
                         {
-                            <div class="alert alert-success py-2">@(IsFr ? "Réduction appliquée" : "Discount applied"): @appliedDiscount.ToString("C")</div>
+                            <div class="alert alert-success py-2">@(IsFr ? "Réduction appliquée" : "Discount applied"): @AYIGroupMarket.Web.Services.CurrencyFormatter.Format(appliedDiscount)</div>
                         }
                         <h3 class="h6 fw-bold mt-3">@(IsFr ? "Articles" : "Items")</h3>
                         <a href="@GetWhatsAppCartLink()" class="btn btn-sm btn-outline-success mt-2" target="_blank">
@@ -210,7 +210,7 @@
                         {
                             <div class="d-flex justify-content-between small py-1 border-bottom">
                                 <span>@(item.Quantity)x @(IsFr ? item.ProductName : item.ProductNameEn) @(item.VariantName is not null ? $"({(IsFr ? item.VariantName : item.VariantNameEn)})" : "")</span>
-                                <span>@item.LineTotal.ToString("C")</span>
+                                <span>@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(item.LineTotal)</span>
                             </div>
                         }
 
@@ -234,25 +234,25 @@
                     <h2 class="h5 fw-bold mb-3">@(IsFr ? "Résumé" : "Summary")</h2>
                     <div class="d-flex justify-content-between mb-2">
                         <span>@(IsFr ? "Sous-total" : "Subtotal")</span>
-                        <span>@cart.Total.ToString("C")</span>
+                        <span>@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(cart.Total)</span>
                     </div>
                     @if (currentShippingFee is not null)
                     {
                         <div class="d-flex justify-content-between mb-2">
                             <span>@(IsFr ? "Livraison" : "Shipping")</span>
-                            <span>@currentShippingFee.Value.ToString("C")</span>
+                            <span>@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(currentShippingFee.Value)</span>
                         </div>
                         @if (appliedDiscount > 0)
                         {
                             <div class="d-flex justify-content-between mb-2 text-success">
                                 <span>@(IsFr ? "Réduction" : "Discount")</span>
-                                <span>-@appliedDiscount.ToString("C")</span>
+                                <span>-@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(appliedDiscount)</span>
                             </div>
                         }
                         <hr />
                         <div class="d-flex justify-content-between fw-bold">
                             <span>Total</span>
-                            <span>@((cart.Total + currentShippingFee.Value - appliedDiscount).ToString("C"))</span>
+                            <span>@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(cart.Total + currentShippingFee.Value - appliedDiscount)</span>
                         </div>
                     }
                 </div>

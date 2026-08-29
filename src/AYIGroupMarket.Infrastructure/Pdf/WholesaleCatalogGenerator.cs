@@ -77,7 +77,7 @@ public class WholesaleCatalogGenerator(AppDbContext db) : IWholesaleCatalogGener
 
                                         table.Cell().Text(name);
                                         table.Cell().Text(isFrench ? variant.Name : variant.NameEn);
-                                        table.Cell().Text(wholesalePrice.Amount.ToString("C"));
+                                        table.Cell().Text($"{wholesalePrice.Amount:N0} FCFA");
                                         table.Cell().Text(wholesalePrice.MinimumQuantity?.ToString() ?? "-");
                                     }
                                 }
@@ -85,7 +85,7 @@ public class WholesaleCatalogGenerator(AppDbContext db) : IWholesaleCatalogGener
                                 {
                                     table.Cell().Text(name);
                                     table.Cell().Text("-");
-                                    table.Cell().Text(product.WholesalePrice.Value.ToString("C"));
+                                    table.Cell().Text($"{product.WholesalePrice.Value:N0} FCFA");
                                     table.Cell().Text(product.MinimumWholesaleQuantity?.ToString() ?? "-");
                                 }
                             }

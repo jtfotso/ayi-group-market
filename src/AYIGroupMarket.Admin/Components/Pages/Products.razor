@@ -35,8 +35,8 @@
                         <td>@p.Sku</td>
                         <td>@p.Name</td>
                         <td>@p.CategoryName</td>
-                        <td>@p.RetailPrice.ToString("C")</td>
-                        <td>@(p.WholesalePrice?.ToString("C") ?? "-")</td>
+                        <td>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(p.RetailPrice)</td>
+                        <td>@(p.WholesalePrice is not null ? AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(p.WholesalePrice.Value) : "-")</td>
                         <td>@p.StockQuantity</td>
                         <td>@(p.IsActive ? "Yes" : "No")</td>
                         <td>

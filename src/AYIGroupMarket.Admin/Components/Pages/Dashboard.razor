@@ -16,7 +16,7 @@
                 <a href="/reports" class="text-decoration-none text-dark">
                     <div class="card p-3 dashboard-card">
                         <small class="text-secondary">Revenue</small>
-                        <h3>@metrics.TotalRevenue.ToString("C")</h3>
+                        <h3>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(metrics.TotalRevenue)</h3>
                     </div>
                 </a>
             </div>
@@ -32,7 +32,7 @@
                 <a href="/reports" class="text-decoration-none text-dark">
                     <div class="card p-3 dashboard-card">
                         <small class="text-secondary">Avg. Order Value</small>
-                        <h3>@metrics.AverageOrderValue.ToString("C")</h3>
+                        <h3>@AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(metrics.AverageOrderValue)</h3>
                     </div>
                 </a>
             </div>

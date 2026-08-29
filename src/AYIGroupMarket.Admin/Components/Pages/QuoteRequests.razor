@@ -42,7 +42,7 @@
                                         }
                                         else
                                         {
-                                            @(item.QuotedUnitPrice?.ToString("C") ?? "-")
+                                            @(item.QuotedUnitPrice is not null ? AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(item.QuotedUnitPrice.Value) : "-")
                                         }
                                     </td>
                                 </tr>
@@ -56,7 +56,7 @@
                     }
                     else if (q.QuotedTotal is not null)
                     {
-                        <p class="fw-bold">Total: @q.QuotedTotal.Value.ToString("C")</p>
+                        <p class="fw-bold">Total: @AYIGroupMarket.Admin.Services.CurrencyFormatter.Format(q.QuotedTotal.Value)</p>
                     }
                 </div>
             </div>

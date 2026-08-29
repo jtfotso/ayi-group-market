@@ -101,9 +101,9 @@ public class InvoiceGenerator(AppDbContext db) : IInvoiceGenerator
                             var displayName = variant is not null ? $"{name} — {variant}" : name;
 
                             table.Cell().Text(displayName);
-                            table.Cell().AlignCenter().Text(item.Quantity.ToString());
-                            table.Cell().AlignRight().Text(item.UnitPrice.ToString("C"));
-                            table.Cell().AlignRight().Text(item.LineTotal.ToString("C"));
+                            table.Cell().AlignCenter().Text($"{item.Quantity}");
+                            table.Cell().AlignRight().Text($"{item.UnitPrice:N0} FCFA");
+                            table.Cell().AlignRight().Text($"{item.LineTotal:N0} FCFA");
                         }
                     });
 
@@ -112,26 +112,26 @@ public class InvoiceGenerator(AppDbContext db) : IInvoiceGenerator
                         c.Item().Row(row =>
                         {
                             row.RelativeItem().AlignRight().Text(isFrench ? "Sous-total" : "Subtotal");
-                            row.ConstantItem(100).AlignRight().Text(order.Subtotal.ToString("C"));
+                            row.ConstantItem(100).AlignRight().Text($"{order.Subtotal:N0} FCFA");
                         });
                         c.Item().Row(row =>
                         {
                             row.RelativeItem().AlignRight().Text(isFrench ? "Livraison" : "Shipping");
-                            row.ConstantItem(100).AlignRight().Text(order.ShippingFee.ToString("C"));
+                            row.ConstantItem(100).AlignRight().Text($"{order.ShippingFee:N0} FCFA");
                         });
                         if (order.DiscountAmount > 0)
                         {
                             c.Item().Row(row =>
                             {
                                 row.RelativeItem().AlignRight().Text(isFrench ? "Réduction" : "Discount");
-                                row.ConstantItem(100).AlignRight().Text($"-{order.DiscountAmount:C}");
+                                row.ConstantItem(100).AlignRight().Text($"-{order.DiscountAmount:N0} FCFA");
                             });
                         }
                         c.Item().PaddingTop(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
                         c.Item().Row(row =>
                         {
                             row.RelativeItem().AlignRight().Text(isFrench ? "Total" : "Total").Bold().FontSize(12);
-                            row.ConstantItem(100).AlignRight().Text(order.Total.ToString("C")).Bold().FontSize(12);
+                            row.ConstantItem(100).AlignRight().Text($"{order.Total:N0} FCFA").Bold().FontSize(12);
                         });
                     });
                 });

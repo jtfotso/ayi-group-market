@@ -17,7 +17,7 @@
             <div class="card-body">
                 <h3 class="h6 fw-bold mb-1">@DisplayName</h3>
                 <p class="small text-secondary mb-2">@DisplayShortDescription</p>
-                <span class="fw-bold text-success">@Product.RetailPrice.ToString("C")</span>
+                <span class="fw-bold text-success">@AYIGroupMarket.Web.Services.CurrencyFormatter.Format(Product.RetailPrice)</span>
             </div>
         </div>
     </a>
