@@ -476,7 +476,8 @@
         var isWholesale = authState.User.IsInRole("Wholesale");
 
         var result = await Sender.Send(new ValidatePromotionCodeQuery(
-            promoCode, cart!.Total, cart.Items.Sum(i => i.Quantity), isWholesale));
+            promoCode, cart!.Total, cart.Items.Sum(i => i.Quantity), isWholesale,
+            phone, email));
 
         if (token.IsCancellationRequested) return; // superseded again while the server call was in flight
 

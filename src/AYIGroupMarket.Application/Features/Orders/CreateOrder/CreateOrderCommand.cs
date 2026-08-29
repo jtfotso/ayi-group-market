@@ -87,10 +87,11 @@ public class CreateOrderCommandHandler(IApplicationDbContext db, IOrderNumberGen
         decimal discountAmount = 0;
         if (!string.IsNullOrWhiteSpace(request.PromoCode))
         {
-            var promoResult = await sender.Send(
-                new AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode.ValidatePromotionCodeQuery(
-                    request.PromoCode, subtotal, cart.Items.Sum(i => i.Quantity), request.IsWholesaleAuthorized),
-                cancellationToken);
+                var promoResult = await sender.Send(
+                    new AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode.ValidatePromotionCodeQuery(
+                        request.PromoCode, subtotal, cart.Items.Sum(i => i.Quantity), request.IsWholesaleAuthorized,
+                        request.CustomerPhone, request.CustomerEmail),
+                    cancellationToken);
 
             if (promoResult.IsValid)
                 discountAmount = promoResult.DiscountAmount;

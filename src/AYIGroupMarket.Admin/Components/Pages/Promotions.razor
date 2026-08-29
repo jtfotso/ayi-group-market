@@ -12,7 +12,7 @@
     <h1>Promotions</h1>
 
     <table class="table">
-        <thead><tr><th>Code</th><th>Type</th><th>Discount</th><th>Min. Order</th><th>Active</th><th>Uses</th><th>Dates</th></tr></thead>
+        <thead><tr><th>Code</th><th>Type</th><th>Discount</th><th>Min. Order</th><th>Reserved For</th><th>Active</th><th>Uses</th><th>Dates</th><th></th></tr></thead>
         <tbody>
             @if (promotions is not null)
             {
@@ -23,6 +23,7 @@
                         <td>@p.Type</td>
                         <td>@(p.DiscountPercentage.HasValue ? $"{p.DiscountPercentage}%" : p.DiscountAmount?.ToString("C") ?? "-")</td>
                         <td>@(p.MinimumOrderAmount?.ToString("C") ?? "-")</td>
+                        <td>@(!string.IsNullOrEmpty(p.TargetCustomerPhone) || !string.IsNullOrEmpty(p.TargetCustomerEmail) ? $"{p.TargetCustomerPhone} {p.TargetCustomerEmail}".Trim() : "Anyone")</td>
                         <td>@(p.IsActive ? "Yes" : "No")</td>
                         <td>@p.UsesCount@(p.MaxUses is not null ? $" / {p.MaxUses}" : "")</td>
                         <td>@p.StartDate.ToString("dd/MM/yy") - @p.EndDate.ToString("dd/MM/yy")</td>
@@ -45,10 +46,10 @@
             <div class="col-md-3"><input class="form-control" placeholder="Code" @bind="code" /></div>
             <div class="col-md-3">
                 <select class="form-select" @bind="type">
-                    @foreach (var t in Enum.GetValues<PromotionType>())
-                    {
-                        <option value="@t">@t</option>
-                    }
+                    <option value="@PromotionType.PercentageDiscount">PercentageDiscount</option>
+                    <option value="@PromotionType.FixedAmount">FixedAmount</option>
+                    <option value="@PromotionType.CartDiscount">CartDiscount</option>
+                    <option value="@PromotionType.WholesalePromotion">WholesalePromotion</option>
                 </select>
             </div>
             <div class="col-md-3"><input type="number" step="0.01" class="form-control" placeholder="Discount % or amount" @bind="discountValue" /></div>
@@ -64,6 +65,14 @@
                 </select>
             </div>
             <div class="col-md-3"><input type="number" class="form-control" placeholder="Max uses (optional)" @bind="maxUses" /></div>
+            <div class="col-md-6">
+                <label class="form-label small">Reserved for phone (optional)</label>
+                <input class="form-control" placeholder="e.g. 677000000" @bind="targetPhone" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small">Reserved for email (optional)</label>
+                <input class="form-control" placeholder="customer@example.com" @bind="targetEmail" />
+            </div>
         </div>
         @if (createError is not null)
         {
@@ -94,6 +103,8 @@
     private int? maxUses;
     private string? createError;
     private Guid? editingId;
+    private string targetPhone = "";
+    private string targetEmail = "";
     [Inject] private AppDbContext Db { get; set; } = null!;
 
 
@@ -108,6 +119,8 @@
         endDate = p.EndDate;
         customerType = p.CustomerType;
         maxUses = p.MaxUses;
+        targetPhone = p.TargetCustomerPhone ?? "";
+        targetEmail = p.TargetCustomerEmail ?? "";
     }
     private void CancelEdit()
     {
@@ -117,6 +130,7 @@
         customerType = PromotionCustomerType.All;
         startDate = DateTime.Today;
         endDate = DateTime.Today.AddMonths(1);
+        targetPhone = ""; targetEmail = "";
         createError = null;
     }
 
@@ -145,6 +159,8 @@
                     EndDate = endDate,
                     CustomerType = customerType,
                     MaxUses = maxUses,
+                    TargetCustomerPhone = string.IsNullOrWhiteSpace(targetPhone) ? null : targetPhone,
+                    TargetCustomerEmail = string.IsNullOrWhiteSpace(targetEmail) ? null : targetEmail,
                     IsActive = true
                 };
                 Db.Promotions.Add(promo);
@@ -161,6 +177,8 @@
                 promo.EndDate = endDate;
                 promo.CustomerType = customerType;
                 promo.MaxUses = maxUses;
+                promo.TargetCustomerPhone = string.IsNullOrWhiteSpace(targetPhone) ? null : targetPhone;
+                promo.TargetCustomerEmail = string.IsNullOrWhiteSpace(targetEmail) ? null : targetEmail;
             }
 
             await Db.SaveChangesAsync();

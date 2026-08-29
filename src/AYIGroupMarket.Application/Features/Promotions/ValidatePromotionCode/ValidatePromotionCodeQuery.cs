@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AYIGroupMarket.Application.Features.Promotions.ValidatePromotionCode;
 
-// IsWholesaleAuthorized derived server-side, never client-supplied — same discipline as pricing checks
 public record ValidatePromotionCodeQuery(
-    string Code, decimal CartSubtotal, int CartTotalQuantity, bool IsWholesaleAuthorized) : IRequest<ValidatePromotionResultDto>;
+    string Code, decimal CartSubtotal, int CartTotalQuantity, bool IsWholesaleAuthorized,
+    string? CustomerPhone = null, string? CustomerEmail = null) : IRequest<ValidatePromotionResultDto>;
 
 public class ValidatePromotionCodeQueryHandler(IApplicationDbContext db)
     : IRequestHandler<ValidatePromotionCodeQuery, ValidatePromotionResultDto>
@@ -28,6 +28,23 @@ public class ValidatePromotionCodeQueryHandler(IApplicationDbContext db)
         if (promo.MaxUses.HasValue && promo.UsesCount >= promo.MaxUses.Value)
             return new ValidatePromotionResultDto(false, "This promo code has reached its usage limit.", 0);
 
+        // Customer targeting — if the promo is reserved for a specific person, verify identity
+        if (!string.IsNullOrEmpty(promo.TargetCustomerPhone))
+        {
+            var phoneMatches = !string.IsNullOrEmpty(request.CustomerPhone) &&
+                promo.TargetCustomerPhone.Replace(" ", "") == request.CustomerPhone.Replace(" ", "");
+            if (!phoneMatches)
+                return new ValidatePromotionResultDto(false, "This promo code is reserved for a specific customer.", 0);
+        }
+
+        if (!string.IsNullOrEmpty(promo.TargetCustomerEmail))
+        {
+            var emailMatches = !string.IsNullOrEmpty(request.CustomerEmail) &&
+                promo.TargetCustomerEmail.Equals(request.CustomerEmail, StringComparison.OrdinalIgnoreCase);
+            if (!emailMatches)
+                return new ValidatePromotionResultDto(false, "This promo code is reserved for a specific customer.", 0);
+        }
+
         if (promo.MinimumOrderAmount.HasValue && request.CartSubtotal < promo.MinimumOrderAmount.Value)
             return new ValidatePromotionResultDto(false,
                 $"Minimum order amount for this code is {promo.MinimumOrderAmount.Value:C}.", 0);
@@ -46,10 +63,9 @@ public class ValidatePromotionCodeQueryHandler(IApplicationDbContext db)
         {
             PromotionType.PercentageDiscount => request.CartSubtotal * (promo.DiscountPercentage ?? 0) / 100m,
             PromotionType.FixedAmount or PromotionType.CartDiscount => promo.DiscountAmount ?? 0,
-            _ => 0m // ProductSpecific/CategoryDiscount need per-item application, not just a flat cart discount — see note below
+            _ => 0m
         };
 
-        // Never let the discount exceed the subtotal
         discount = Math.Min(discount, request.CartSubtotal);
 
         return new ValidatePromotionResultDto(true, null, discount);

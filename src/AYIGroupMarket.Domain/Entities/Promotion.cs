@@ -23,6 +23,9 @@ public class Promotion : BaseEntity
     public Guid? CategoryId { get; set; }  // for CategoryDiscount
     public ProductCategory? Category { get; set; }
 
+    public string? TargetCustomerPhone { get; set; }
+    public string? TargetCustomerEmail { get; set; }
+
     public bool IsActive { get; set; } = true;
     public int? MaxUses { get; set; }
     public int UsesCount { get; set; } = 0;
